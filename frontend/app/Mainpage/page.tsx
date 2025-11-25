@@ -86,6 +86,12 @@ const Layout: React.FC = () => {
           >
             About
           </button>
+          <button
+            className="text-left hover:bg-gray-100 px-2 py-1 rounded"
+            onClick={() => router.push('/CreatePost')}
+          >
+            Create post 
+          </button>
         </aside>
 
         {/* Main Content */}
