@@ -1,3 +1,4 @@
+
 Reddit Clone Project – Full Setup Guide
 # Reddit Clone Project
 
@@ -52,4 +53,29 @@ cd frontend
 npm run dev
 
 Next.js app runs at http://localhost:3000
+
+**folder structure
+
+**reddit-clone/
+│
+├── backend/
+│   ├── src/
+│   │   ├── models/
+│   │   ├── controllers/
+│   │   ├── routes/
+│   │   ├── middleware/
+│   │   ├── utils/
+│   │   └── server.ts
+│   ├── package.json
+│   └── tsconfig.json
+│
+└── frontend/
+    ├── app/ or pages/
+    ├── components/
+    ├── hooks/
+    ├── utils/
+    ├── lib/
+    ├── package.json
+    └── tsconfig.json
+
 
