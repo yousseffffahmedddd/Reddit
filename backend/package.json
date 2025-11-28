@@ -5,7 +5,7 @@
   "description": "",
   "main": "dist/server.ts",
   "scripts": {
-    "dev": "nodemon --watch src/**/*.ts --exec ts-node src/server.ts",
+    "dev": "nodemon --watch src --exec ts-node src/server.ts",
     "start": "node --loader ts-node/esm src/server.ts",
     "build": "tsc"
   },

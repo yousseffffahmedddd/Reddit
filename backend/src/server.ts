@@ -1,46 +1,33 @@
+import 'dotenv/config'; // 1. Load env vars before anything else
 import express from 'express';
 import cors from 'cors';
-import mongoose from 'mongoose';
 import { connectDatabase } from './config/database.ts';
-import dotenv from 'dotenv';
+
+// Import Routes
+import postsRoutes from "./routes/postsServerEndpoint.ts";
+import communityRoutes from './routes/CommunityServerEndpoint.ts';
+
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Example route
-app.get('/', (req, res) => {
-  res.send('Backend is running!');
-});
-
-dotenv.config()
+// Database Connection
 connectDatabase();
 
-import postsRoutes from "./routes/postsServerEndpoint.ts";
-import CommunityServerEndpoint from './routes/CommunityServerEndpoint.ts';
-
-
-connectDatabase().then(async () => {
-  const db = mongoose.connection;
-
-});
-
-app.get("/apis/Communityapi", async (req, res) => {
-  try {
-    const db = mongoose.connection;
-    const communities = await db.collection("Community").find().toArray();
-    res.json(communities);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch communities" });
-  }
-});
-app.use("/apis/Communityapi", CommunityServerEndpoint);
-
+// API Routes
+// This delegates the logic to your separate route files
+app.use("/apis/Communityapi", communityRoutes);
 app.use("/apis/Postapi", postsRoutes);
+
+// Simple Health Check
+app.get('/', (req, res) => {
+    res.send('Backend is running!');
+});
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server is running on ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });

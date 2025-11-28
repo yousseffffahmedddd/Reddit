@@ -30,28 +30,28 @@ const router = express.Router();
 
 // Community schema
 interface ICommunity extends mongoose.Document {
-  name: string;
-  description?: string;
+    name: string;
+    description?: string;
 }
 
 const CommunitySchema = new mongoose.Schema<ICommunity>({
-  name: { type: String, required: true },
-  description: { type: String },
+    name: { type: String, required: true },
+    description: { type: String },
 });
 
 // Mongoose model
 const Community =
-  mongoose.models.Community || mongoose.model<ICommunity>("Community", CommunitySchema);
+    mongoose.models.Community || mongoose.model<ICommunity>("Community", CommunitySchema);
 
 // GET all communities from DB
 router.get("/", async (req: Request, res: Response) => {
-  try {
-    const communities = await Community.find();
-    res.json(communities);
-  } catch (err) {
-    console.error("Failed to fetch communities:", err);
-    res.status(500).json({ error: "Failed to fetch communities" });
-  }
+    try {
+        const communities = await Community.find();
+        res.json(communities);
+    } catch (err) {
+        console.error("Failed to fetch communities:", err);
+        res.status(500).json({ error: "Failed to fetch communities" });
+    }
 });
 
 export default router;
