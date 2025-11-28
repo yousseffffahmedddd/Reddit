@@ -1,9 +1,7 @@
-// src/controllers/postController.ts
 import express from "express";
+import type { Request, Response } from "express";
 import Post from "../models/PostSchema.ts";
 
-type Request = express.Request;
-type Response = express.Response;
 export const createPost = async (req: Request, res: Response) => {
   try {
     const { title, body, userId, communityId } = req.body;
@@ -15,7 +13,7 @@ export const createPost = async (req: Request, res: Response) => {
     const newPost = await Post.create({
       title,
       content: body,
-      postType: "text", // Assuming a default postType; adjust as needed
+      postType: "text",
       author: userId,
       community: communityId,
     });
@@ -23,6 +21,21 @@ export const createPost = async (req: Request, res: Response) => {
     res.status(201).json(newPost);
   } catch (err) {
     console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getPopularPosts = async (_req: Request, res: Response) => {
+  try {
+    const popularPosts = await Post.find()
+      .sort({ upvotes: -1, createdAt: -1 })
+      .limit(20)
+      .populate("author", "username")
+      .populate("community", "name");
+
+    res.json(popularPosts);
+  } catch (error: any) {
+    console.error("Error fetching popular posts:", error.message);
     res.status(500).json({ message: "Server error" });
   }
 };
