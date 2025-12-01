@@ -1,57 +1,25 @@
-// import express from "express";
-// type Request = express.Request;
-// type Response = express.Response;
-// const router = express.Router();
-
-// // Dummy community data
-// const dummyCommunities = [
-//   {
-//     _id: "67a0222bcf1234abcd567111", // matches your CreatePost selectedCommunity
-//     name: "user profile (/u)",
-//   },
-//   {
-//     _id: "67a0333bcf1234abcd567222",
-//     name: "reddit community (/r)",
-//   },
-// ];
-
-// // GET all communities
-// router.get("/", (req: Request, res: Response) => {
-//   res.json(dummyCommunities);
-// });
-
-// export default router;
-
-// src/routes/Communityapi.ts
-import express, { Request, Response } from "express";
-import mongoose from "mongoose";
-
-const router = express.Router();
-
-// Community schema
-interface ICommunity extends mongoose.Document {
+// 1. Export the Interface so other files can use "CommunityData"
+export interface CommunityData {
+    _id: string;
     name: string;
     description?: string;
 }
 
-const CommunitySchema = new mongoose.Schema<ICommunity>({
-    name: { type: String, required: true },
-    description: { type: String },
-});
+const API_URL = "http://localhost:3000/apis/Communityapi";
 
-// Mongoose model
-const Community =
-    mongoose.models.Community || mongoose.model<ICommunity>("Community", CommunitySchema);
-
-// GET all communities from DB
-router.get("/", async (req: Request, res: Response) => {
+// 2. Export the Function so other files can use "getAllCommunities"
+export const getAllCommunities = async (): Promise<CommunityData[]> => {
     try {
-        const communities = await Community.find();
-        res.json(communities);
-    } catch (err) {
-        console.error("Failed to fetch communities:", err);
-        res.status(500).json({ error: "Failed to fetch communities" });
-    }
-});
+        const response = await fetch(API_URL);
 
-export default router;
+        if (!response.ok) {
+            throw new Error(`Failed to fetch data: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("API Error:", error);
+        throw error;
+    }
+};
