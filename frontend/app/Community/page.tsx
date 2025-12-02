@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { getAllCommunities, CommunityData } from "../../apis/Communityapi";
+import JoinButton from "../components/JoinButton"; // Import the button
 
 const Community = () => {
     const [communities, setCommunities] = useState<CommunityData[]>([]);
@@ -34,16 +35,26 @@ const Community = () => {
                     <Link
                         key={community._id}
                         href={`/r/${community.name}`}
-                        className="block group"
+                        className="block group relative"
                     >
                         <div className="border border-gray-200 p-4 rounded-lg shadow-sm hover:shadow-md hover:border-blue-500 transition-all bg-white cursor-pointer h-full">
-                            <div className="flex items-center gap-2 mb-2">
-                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
-                                    r/
+
+                            {/* Header: Icon + Name + Button */}
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
+                                        r/
+                                    </div>
+                                    <h2 className="text-lg font-bold text-gray-900 group-hover:text-blue-600">
+                                        r/{community.name}
+                                    </h2>
                                 </div>
-                                <h2 className="text-lg font-bold text-gray-900 group-hover:text-blue-600">
-                                    r/{community.name}
-                                </h2>
+
+                                {/* 👇 The Join Button Component */}
+                                <JoinButton
+                                    communityId={community._id}
+                                    initialMembers={community.members}
+                                />
                             </div>
 
                             <p className="text-sm text-gray-500 line-clamp-2">

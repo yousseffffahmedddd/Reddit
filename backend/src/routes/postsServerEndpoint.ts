@@ -24,6 +24,7 @@
 
 // src/routes/posts.ts
 import express from "express";
+import type { Request, Response } from "express"; // Use 'type' for TS interfaces
 import Post from "../models/PostSchema.ts";
 
 const router = express.Router();

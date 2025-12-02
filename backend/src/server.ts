@@ -1,5 +1,6 @@
 import 'dotenv/config'; // 1. Load env vars before anything else
-import express from 'express';
+import express from "express";
+import type { Request, Response } from "express"; // Use 'type' for TS interfaces
 import cors from 'cors';
 import { connectDatabase } from './config/database.ts';
 
