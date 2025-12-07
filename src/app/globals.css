@@ -1,0 +1,121 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 255 255 255;
+    --foreground: 15 23 42;
+    --card: 255 255 255;
+    --card-foreground: 15 23 42;
+    --primary: 249 115 22;
+    --primary-foreground: 255 255 255;
+    --secondary: 241 245 249;
+    --secondary-foreground: 15 23 42;
+    --muted: 241 245 249;
+    --muted-foreground: 100 116 139;
+    --accent: 241 245 249;
+    --accent-foreground: 15 23 42;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+    --border: 226 232 240;
+    --input: 226 232 240;
+    --ring: 249 115 22;
+    --upvote: 255 69 0;
+    --downvote: 113 147 255;
+  }
+
+  .dark {
+    --background: 24 24 27;
+    --foreground: 248 250 252;
+    --card: 39 39 42;
+    --card-foreground: 248 250 252;
+    --primary: 249 115 22;
+    --primary-foreground: 255 255 255;
+    --secondary: 39 39 42;
+    --secondary-foreground: 248 250 252;
+    --muted: 39 39 42;
+    --muted-foreground: 161 161 170;
+    --accent: 39 39 42;
+    --accent-foreground: 248 250 252;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+    --border: 63 63 70;
+    --input: 63 63 70;
+    --ring: 249 115 22;
+    --upvote: 255 69 0;
+    --downvote: 113 147 255;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  /* Theme transition for smooth dark/light mode switching */
+  html {
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  /* Apply transitions to common elements for smooth theme switching */
+  *,
+  *::before,
+  *::after {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, fill 0.3s ease, stroke 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  /* Disable transitions on page load to prevent flash */
+  html.no-transitions,
+  html.no-transitions *,
+  html.no-transitions *::before,
+  html.no-transitions *::after {
+    transition: none !important;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-secondary;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/50;
+}
+
+/* Reddit-style post card hover */
+.post-card {
+  @apply transition-all duration-200;
+}
+
+.post-card:hover {
+  @apply border-muted-foreground/30;
+}
+
+/* Vote button animations */
+.vote-button {
+  @apply transition-transform duration-150;
+}
+
+.vote-button:active {
+  @apply scale-90;
+}
+
+/* Comment thread lines */
+.comment-thread-line {
+  @apply absolute left-4 top-10 bottom-0 w-0.5 bg-border hover:bg-primary cursor-pointer;
+}
