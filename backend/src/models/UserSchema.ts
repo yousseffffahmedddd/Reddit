@@ -1,11 +1,22 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
-const UserSchema = new Schema({
-  username: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true },
-  passwordHash: { type: String, required: true },
+export interface IUser extends Document {
+    username: string;
+    email: string;
+    passwordHash: string; // We store the hash, not the plain password
+    createdAt: Date;
+}
 
-  createdAt: { type: Date, default: Date.now }
+const UserSchema: Schema = new Schema({
+    username: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true },
+    passwordHash: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now },
+}, {
+    collection: "users" // Force collection name to be 'users'
 });
 
-export default mongoose.model("User", UserSchema);
+// Overwrite protection
+const User = mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
+
+export default User;

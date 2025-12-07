@@ -3,7 +3,7 @@ import express from "express";
 import type { Request, Response } from "express"; // Use 'type' for TS interfaces
 import cors from 'cors';
 import { connectDatabase } from './config/database.ts';
-
+import authRoutes from "./routes/authRoutes";
 // Import Routes
 import postsRoutes from "./routes/postsServerEndpoint.ts";
 import communityRoutes from './routes/CommunityServerEndpoint.ts';
@@ -20,6 +20,7 @@ connectDatabase();
 
 // API Routes
 // This delegates the logic to your separate route files
+app.use("/api/auth", authRoutes);
 app.use("/apis/Communityapi", communityRoutes);
 app.use("/apis/Postapi", postsRoutes);
 
