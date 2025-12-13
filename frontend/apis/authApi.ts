@@ -65,11 +65,25 @@ export const getToken = () => {
     return null;
 };
 
-export const logout = () => {
-    if (typeof window !== "undefined") {
+export const logout = async (): Promise<void> => {
+    if (typeof window === "undefined") return;
+
+    try {
+        // Optional: notify backend (not required, but clean)
+        await fetch(`${API_URL}/logout`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+    } catch {
+        // Ignore backend errors – logout should still proceed
+    } finally {
+        // ✅ REAL logout happens here
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        // Optional: Refresh page to update UI
-        window.location.href = "/Login";
+
+        // Redirect to login
+        window.location.href = "/login";
     }
 };

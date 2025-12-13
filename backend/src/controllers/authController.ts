@@ -77,3 +77,11 @@ export const login = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Error logging in", error });
     }
 };
+export const logout = async (req: Request, res: Response) => {
+    try {
+
+        return res.status(200).json({ message: "Logged out successfully" });
+    } catch (error) {
+        return res.status(500).json({ message: "Error logging out" });
+    }
+};
