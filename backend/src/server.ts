@@ -1,12 +1,18 @@
 import 'dotenv/config';
 import express from "express";
-import cors from 'cors';
-import { connectDatabase } from './config/database.ts';
+import cors from "cors";
+import { createServer } from "http";
+import { Server } from "socket.io";
 
-import authRoutes from "./routes/authRoutes.ts";
+import { connectDatabase } from "./config/database.ts";
+
+import authRoutes from "./routes/authRoutes";
 import postsRoutes from "./routes/postsServerEndpoint.ts";
-import communityRoutes from './routes/CommunityServerEndpoint.ts';
+import communityRoutes from "./routes/CommunityServerEndpoint.ts";
 import aiRoute from "./routes/aiRoute.ts";
+import chatRoutes from "./routes/chatRoute";
+
+import { setupSocket } from "./socket";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,20 +21,34 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Database Connection
+// DB
 connectDatabase();
 
-// Routes
+// REST routes
 app.use("/api/auth", authRoutes);
-app.use("/apis/Communityapi", communityRoutes);
 app.use("/apis/Postapi", postsRoutes);
+app.use("/apis/Communityapi", communityRoutes);
 app.use("/apis/ai", aiRoute);
+app.use("/apis/chat", chatRoutes);
 
-
-app.get('/', (req, res) => {
-    res.send('Backend is running!');
+// Health check
+app.get("/", (req, res) => {
+    res.send("Backend is running!");
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+// Create HTTP server
+const httpServer = createServer(app);
+
+// Socket.IO
+const io = new Server(httpServer, {
+    cors: {
+        origin: "*",
+    },
+});
+
+setupSocket(io);
+
+// Start server
+httpServer.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
