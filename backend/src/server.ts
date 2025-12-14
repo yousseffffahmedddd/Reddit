@@ -1,12 +1,18 @@
-import 'dotenv/config'; // 1. Load env vars before anything else
+import 'dotenv/config';
 import express from "express";
-import type { Request, Response } from "express"; // Use 'type' for TS interfaces
-import cors from 'cors';
-import { connectDatabase } from './config/database.ts';
+import cors from "cors";
+import { createServer } from "http";
+import { Server } from "socket.io";
 
-// Import Routes
+import { connectDatabase } from "./config/database.ts";
+
+import authRoutes from "./routes/authRoutes";
 import postsRoutes from "./routes/postsServerEndpoint.ts";
-import communityRoutes from './routes/CommunityServerEndpoint.ts';
+import communityRoutes from "./routes/CommunityServerEndpoint.ts";
+import aiRoute from "./routes/aiRoute.ts";
+import chatRoutes from "./routes/chatRoute";
+
+import { setupSocket } from "./socket";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,20 +21,34 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Database Connection
+// DB
 connectDatabase();
 
-// API Routes
-// This delegates the logic to your separate route files
-app.use("/apis/Communityapi", communityRoutes);
+// REST routes
+app.use("/api/auth", authRoutes);
 app.use("/apis/Postapi", postsRoutes);
+app.use("/apis/Communityapi", communityRoutes);
+app.use("/apis/ai", aiRoute);
+app.use("/apis/chat", chatRoutes);
 
-// Simple Health Check
-app.get('/', (req, res) => {
-    res.send('Backend is running!');
+// Health check
+app.get("/", (req, res) => {
+    res.send("Backend is running!");
 });
 
+// Create HTTP server
+const httpServer = createServer(app);
+
+// Socket.IO
+const io = new Server(httpServer, {
+    cors: {
+        origin: "*",
+    },
+});
+
+setupSocket(io);
+
 // Start server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+httpServer.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
