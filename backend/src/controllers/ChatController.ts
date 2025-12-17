@@ -13,7 +13,8 @@ export const getOrCreateConversation = async (req: Request, res: Response) => {
         }
 
         let conversation = await Conversation.findOne({
-            participants: { $all: [userId, otherUserId] },
+            participants: { $all: [userId, otherUserId],
+            $size:2},
         }).populate("participants", "username");
 
         if (!conversation) {
