@@ -82,8 +82,9 @@ export const logout = async (): Promise<void> => {
         // ✅ REAL logout happens here
         localStorage.removeItem("token");
         localStorage.removeItem("user");
+        localStorage.removeItem("userId");
 
         // Redirect to login
-        window.location.href = "/login";
+        window.location.href = "/Login";
     }
 };
