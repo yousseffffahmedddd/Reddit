@@ -12,6 +12,7 @@ import communityRoutes from "./routes/CommunityServerEndpoint.ts";
 import aiRoute from "./routes/aiRoute.ts";
 import chatRoutes from "./routes/chatRoute";
 import chatbotRoutes from "./routes/chatBotRoutes";
+import commentRoutes from "./routes/commentRoutes";
 import { setupSocket } from "./socket";
 
 const app = express();
@@ -31,6 +32,7 @@ app.use("/apis/Communityapi", communityRoutes);
 app.use("/apis/ai", aiRoute);
 app.use("/api/chat", chatRoutes);
 app.use("/api/chatbot", chatbotRoutes);
+app.use("/api/comments", commentRoutes);
 
 // Health check
 
