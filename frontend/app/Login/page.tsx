@@ -26,8 +26,11 @@ const Login = () => {
             // Save Token if present
             if (data.token) {
                 setToken(data.token);
-                // Optional: Save user info for display
-                localStorage.setItem("user", JSON.stringify(data.user));
+                // Save user info for display and chat feature
+                if (data.user) {
+                    localStorage.setItem("user", JSON.stringify(data.user));
+                    localStorage.setItem("userId", data.user.id);
+                }
             }
 
             alert("Login Successful!");

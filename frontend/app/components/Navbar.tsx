@@ -21,9 +21,10 @@ const Navbar = () => {
         login page
         </Link>
         <br></br>
-        <Link href="/profile">
-        Profile
+        <Link href="/chat">
+        Messages
         </Link>
+        <br></br>
         <Link href="/Community">
         community page
         </Link>

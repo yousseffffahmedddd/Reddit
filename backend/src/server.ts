@@ -29,9 +29,13 @@ app.use("/api/auth", authRoutes);
 app.use("/apis/Postapi", postsRoutes);
 app.use("/apis/Communityapi", communityRoutes);
 app.use("/apis/ai", aiRoute);
-app.use("/apis/chat", chatRoutes);
+app.use("/api/chat", chatRoutes);
 app.use("/api/chatbot", chatbotRoutes);
+
 // Health check
+
+
+
 app.get("/", (req, res) => {
     res.send("Backend is running!");
 });
