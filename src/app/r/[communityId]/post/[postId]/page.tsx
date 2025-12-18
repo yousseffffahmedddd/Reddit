@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { MessageSquare, Share2, Bookmark, ExternalLink, ArrowLeft } from 'lucide-react';
 import { cn, formatTimeAgo, getDomainFromUrl } from '@/lib/utils';
-import { Avatar, Loader, ErrorMessage, Button } from '@/components/ui';
+import { Avatar, Loader, ErrorMessage } from '@/components/ui';
 import { VoteButton } from '@/components/post/VoteButton';
 import { CommentTree } from '@/components/comment';
 import { usePost, useSavePost, useAuthStore } from '@/hooks';

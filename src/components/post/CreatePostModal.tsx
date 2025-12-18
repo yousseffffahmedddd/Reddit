@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Image, Link2, FileText } from 'lucide-react';
+import { Image, Link2, FileText } from 'lucide-react';
 import { Button, Input, Textarea, Modal } from '@/components/ui';
 import { useCreatePost, useCommunities } from '@/hooks';
 import type { PostType } from '@/types';

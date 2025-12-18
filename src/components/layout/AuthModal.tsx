@@ -25,8 +25,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     e.preventDefault();
 
     if (mode === 'login') {
+      // Backend expects email for login
+      // We use the email field for login
       login(
-        { username, password },
+        { username: email, password },
         {
           onSuccess: () => {
             resetForm();
@@ -70,30 +72,30 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium">Username</label>
-          <Input
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="username"
-            required
-            autoComplete="username"
-          />
-        </div>
-
         {mode === 'register' && (
           <div>
-            <label className="mb-1 block text-sm font-medium">Email</label>
+            <label className="mb-1 block text-sm font-medium">Username</label>
             <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="email@example.com"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="username"
               required
-              autoComplete="email"
+              autoComplete="username"
             />
           </div>
         )}
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">Email</label>
+          <Input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="email@example.com"
+            required
+            autoComplete="email"
+          />
+        </div>
 
         <div>
           <label className="mb-1 block text-sm font-medium">Password</label>

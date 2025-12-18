@@ -2,13 +2,60 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { Calendar, Award, FileText, MessageSquare, Bookmark } from 'lucide-react';
-import { cn, formatNumber, formatDate } from '@/lib/utils';
+import { cn, formatNumber, formatDate, formatTimeAgo } from '@/lib/utils';
 import { Avatar, Loader, ErrorMessage, Button } from '@/components/ui';
 import { PostList } from '@/components/post';
-import { useUser } from '@/hooks';
+import { useUser, useUserComments } from '@/hooks';
 
 type Tab = 'posts' | 'comments' | 'saved';
+
+function UserComments({ userId }: { userId: string }) {
+  const { data: comments, isLoading, isError, error, refetch } = useUserComments(userId);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-8">
+        <Loader text="Loading comments..." />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ErrorMessage
+        message={error?.message || 'Failed to load comments'}
+        onRetry={() => refetch()}
+      />
+    );
+  }
+
+  if (!comments || comments.length === 0) {
+    return (
+      <div className="rounded-md border bg-card p-8 text-center">
+        <p className="text-muted-foreground">No comments yet</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {comments.map((comment) => (
+        <div key={comment.id} className="rounded-md border bg-card p-4">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Link href={`/u/${comment.author.username}`} className="font-medium hover:underline">
+              {comment.author.username}
+            </Link>
+            <span>•</span>
+            <span>{formatTimeAgo(comment.createdAt)}</span>
+          </div>
+          <p className="mt-2 text-sm">{comment.content}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function UserProfilePage() {
   const params = useParams();
@@ -89,12 +136,8 @@ export default function UserProfilePage() {
 
       {/* Content */}
       <div className="max-w-2xl">
-        {activeTab === 'posts' && <PostList userId={user.id} />}
-        {activeTab === 'comments' && (
-          <div className="rounded-md border bg-card p-8 text-center">
-            <p className="text-muted-foreground">User comments will appear here</p>
-          </div>
-        )}
+        {activeTab === 'posts' && <PostList userId={user.username} />}
+        {activeTab === 'comments' && <UserComments userId={user.id} />}
         {activeTab === 'saved' && (
           <div className="rounded-md border bg-card p-8 text-center">
             <p className="text-muted-foreground">Saved posts are private</p>

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { TrendingUp, Users, Info, Shield, FileText } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import { Avatar, Button } from '@/components/ui';
 import { useCommunities, useAuthStore } from '@/hooks';
 import { formatNumber } from '@/lib/utils';
@@ -53,16 +53,6 @@ export function RightSidebar() {
         </div>
       </div>
 
-      {/* Reddit Premium ad (simplified) */}
-      <div className="mb-4 rounded-md border bg-gradient-to-r from-orange-500 to-red-500 p-4 text-white">
-        <h3 className="mb-2 font-medium">Reddit Premium</h3>
-        <p className="mb-3 text-sm opacity-90">
-          The best Reddit experience, with monthly Coins
-        </p>
-        <Button variant="secondary" size="sm" className="w-full">
-          Try Now
-        </Button>
-      </div>
 
       {/* Footer links */}
       <div className="rounded-md border bg-card p-4">

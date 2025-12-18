@@ -8,12 +8,11 @@ import type {
   CreateCommentInput,
   LoginInput,
   RegisterInput,
-  Notification,
 } from '@/types';
 
 // Mutable copies for CRUD operations
-let postsData = [...posts];
-let commentsData = [...comments];
+const postsData = [...posts];
+const commentsData = [...comments];
 let notificationsData = [...notifications];
 let isLoggedIn = false;
 
@@ -182,7 +181,7 @@ export const handlers = [
     const url = new URL(request.url);
     const sort = url.searchParams.get('sort') || 'best';
 
-    let postComments = commentsData.filter((c) => c.postId === params.postId);
+    const postComments = commentsData.filter((c) => c.postId === params.postId);
 
     // Sort
     if (sort === 'new') {

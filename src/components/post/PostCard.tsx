@@ -1,14 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { MessageSquare, Share2, Bookmark, MoreHorizontal, ExternalLink, Trash2, Edit2 } from 'lucide-react';
+import { MessageSquare, Share2, Bookmark, MoreHorizontal, ExternalLink, Trash2, Edit2, Sparkles, X } from 'lucide-react';
 import { cn, formatTimeAgo, getDomainFromUrl, truncateText } from '@/lib/utils';
-import { Avatar, Button } from '@/components/ui';
 import { VoteButton } from './VoteButton';
-import { useSavePost, useDeletePost, useAuthStore } from '@/hooks';
+import { useDeletePost, useAuthStore, useSummarizePost } from '@/hooks';
+// Note: useSavePost removed - not implemented in backend
 import type { Post } from '@/types';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/ui/Modal';
+import { Loader } from '@/components/ui';
 
 interface PostCardProps {
   post: Post;
@@ -18,20 +19,52 @@ interface PostCardProps {
 export function PostCard({ post, isCompact = false }: PostCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  const { mutate: savePost } = useSavePost();
-  const { mutate: deletePost, isPending: isDeleting } = useDeletePost();
-  const { user } = useAuthStore();
+  const [showSummary, setShowSummary] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
+  // Note: savePost removed - not implemented in backend
+  const { mutate: _deletePost, isPending: isDeleting } = useDeletePost();
+  const { mutate: summarizePost, isPending: isSummarizing } = useSummarizePost();
+  const { user, isAuthenticated } = useAuthStore();
   const isAuthor = user?.id === post.authorId;
 
+  // TODO: Save functionality not implemented in backend
   const handleSave = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    savePost(post.id);
+    // savePost(post.id); - Not implemented in backend
+    console.warn('Save post functionality not implemented in backend');
   };
 
   const handleDelete = () => {
-    deletePost(post.id);
+    // TODO: Delete functionality not implemented in backend
+    // deletePost(post.id);
+    console.warn('Delete post functionality not implemented in backend');
     setShowDeleteDialog(false);
+  };
+
+  const handleSummarize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isAuthenticated) {
+      console.warn('Must be logged in to use AI summarization');
+      return;
+    }
+
+    if (summary) {
+      setShowSummary(!showSummary);
+      return;
+    }
+
+    summarizePost(post.id, {
+      onSuccess: (response) => {
+        setSummary(response.summary);
+        setShowSummary(true);
+      },
+      onError: (error) => {
+        console.error('Summarization failed:', error);
+      },
+    });
   };
 
   const postUrl = `/r/${post.communityId}/post/${post.id}`;
@@ -156,6 +189,25 @@ export function PostCard({ post, isCompact = false }: PostCardProps) {
               <span>{post.isSaved ? 'Saved' : 'Save'}</span>
             </button>
 
+            {/* AI Summarize button */}
+            {isAuthenticated && post.content && !isCompact && (
+              <button
+                onClick={handleSummarize}
+                disabled={isSummarizing}
+                className={cn(
+                  'flex items-center gap-1 rounded-sm px-2 py-1 text-xs font-medium hover:bg-muted',
+                  showSummary ? 'text-primary' : 'text-muted-foreground'
+                )}
+              >
+                {isSummarizing ? (
+                  <Loader size="sm" />
+                ) : (
+                  <Sparkles className={cn('h-4 w-4', showSummary && 'fill-current')} />
+                )}
+                <span>{isSummarizing ? 'Summarizing...' : 'AI Summary'}</span>
+              </button>
+            )}
+
             {isAuthor && (
               <div className="relative ml-auto">
                 <button
@@ -189,6 +241,25 @@ export function PostCard({ post, isCompact = false }: PostCardProps) {
               </div>
             )}
           </div>
+
+          {/* AI Summary display */}
+          {showSummary && summary && (
+            <div className="mt-2 rounded-md border border-primary/20 bg-primary/5 p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-medium text-primary">
+                  <Sparkles className="h-4 w-4" />
+                  AI Summary
+                </div>
+                <button
+                  onClick={() => setShowSummary(false)}
+                  className="rounded p-1 hover:bg-muted"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">{summary}</p>
+            </div>
+          )}
         </div>
 
         {/* Thumbnail for compact mode */}

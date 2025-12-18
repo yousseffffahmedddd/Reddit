@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Flame, TrendingUp, Star, Plus } from 'lucide-react';
+import { Home, Flame, TrendingUp, Star, Plus, MessageCircle, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Avatar, Button } from '@/components/ui';
+import { Avatar } from '@/components/ui';
 import { useCommunities, useAuthStore } from '@/hooks';
+import { CreateCommunityModal } from '@/components/community';
 
 interface LeftSidebarProps {
   isOpen?: boolean;
@@ -16,6 +18,7 @@ export function LeftSidebar({ isOpen = true, onClose }: LeftSidebarProps) {
   const pathname = usePathname();
   const { data: communitiesData } = useCommunities();
   const { isAuthenticated } = useAuthStore();
+  const [showCreateCommunity, setShowCreateCommunity] = useState(false);
 
   const communities = communitiesData?.data || [];
 
@@ -23,6 +26,12 @@ export function LeftSidebar({ isOpen = true, onClose }: LeftSidebarProps) {
     { href: '/', label: 'Home', icon: Home },
     { href: '/popular', label: 'Popular', icon: Flame },
     { href: '/all', label: 'All', icon: TrendingUp },
+    { href: '/ask', label: 'Ask AI', icon: Bot },
+  ];
+
+  // Links that require authentication
+  const authLinks = [
+    { href: '/chat', label: 'Chat', icon: MessageCircle },
   ];
 
   const NavLink = ({ href, label, icon: Icon }: { href: string; label: string; icon: typeof Home }) => {
@@ -64,6 +73,9 @@ export function LeftSidebar({ isOpen = true, onClose }: LeftSidebarProps) {
           {mainLinks.map((link) => (
             <NavLink key={link.href} {...link} />
           ))}
+          {isAuthenticated && authLinks.map((link) => (
+            <NavLink key={link.href} {...link} />
+          ))}
         </nav>
 
         <hr className="my-4" />
@@ -73,7 +85,11 @@ export function LeftSidebar({ isOpen = true, onClose }: LeftSidebarProps) {
           <div className="mb-2 flex items-center justify-between px-3">
             <span className="text-xs font-medium uppercase text-muted-foreground">Communities</span>
             {isAuthenticated && (
-              <button className="rounded p-1 hover:bg-muted" aria-label="Create community">
+              <button
+                onClick={() => setShowCreateCommunity(true)}
+                className="rounded p-1 hover:bg-muted"
+                aria-label="Create community"
+              >
                 <Plus className="h-4 w-4 text-muted-foreground" />
               </button>
             )}
@@ -116,6 +132,11 @@ export function LeftSidebar({ isOpen = true, onClose }: LeftSidebarProps) {
           </>
         )}
       </div>
+
+      <CreateCommunityModal
+        isOpen={showCreateCommunity}
+        onClose={() => setShowCreateCommunity(false)}
+      />
     </aside>
   );
 }

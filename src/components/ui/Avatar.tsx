@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 
 interface AvatarProps {
   src: string | null;
-  alt: string;
+  alt?: string;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
@@ -15,13 +15,14 @@ const sizeClasses = {
   xl: 'h-16 w-16',
 };
 
-export function Avatar({ src, alt, size = 'md', className }: AvatarProps) {
-  const initials = alt
+export function Avatar({ src, alt = '', size = 'md', className }: AvatarProps) {
+  const initials = (alt || '')
     .split(' ')
     .map((n) => n[0])
+    .filter(Boolean)
     .join('')
     .toUpperCase()
-    .slice(0, 2);
+    .slice(0, 2) || '?';
 
   return (
     <div

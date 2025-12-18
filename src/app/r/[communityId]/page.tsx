@@ -6,7 +6,7 @@ import { Flame, Clock, TrendingUp, Users, Calendar } from 'lucide-react';
 import { cn, formatNumber, formatDate } from '@/lib/utils';
 import { Avatar, Loader, ErrorMessage, Button } from '@/components/ui';
 import { PostList } from '@/components/post';
-import { useCommunity, useAuthStore } from '@/hooks';
+import { useCommunity, useAuthStore, useJoinCommunity } from '@/hooks';
 import type { PostSortType } from '@/types';
 
 const sortOptions: { value: PostSortType; label: string; icon: typeof Flame }[] = [
@@ -22,6 +22,13 @@ export default function CommunityPage() {
   const { isAuthenticated } = useAuthStore();
 
   const { data: community, isLoading, isError, error, refetch } = useCommunity(communityId);
+  const { mutate: joinCommunity, isPending: isJoining } = useJoinCommunity();
+
+  const handleJoin = () => {
+    if (community) {
+      joinCommunity(community.id);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -62,7 +69,9 @@ export default function CommunityPage() {
             <p className="text-sm text-muted-foreground">r/{community.name}</p>
           </div>
           {isAuthenticated && (
-            <Button>Join</Button>
+            <Button onClick={handleJoin} disabled={isJoining}>
+              {isJoining ? 'Joining...' : 'Join'}
+            </Button>
           )}
         </div>
 

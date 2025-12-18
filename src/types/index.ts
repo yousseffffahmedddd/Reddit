@@ -183,3 +183,12 @@ export interface Notification {
   commentId?: string;
   communityId?: string;
 }
+// Add this to your types file
+
+export interface FetchPostsParams {
+    communityId?: string;
+    userId?: string;
+    sort?: PostSortType;
+    cursor?: string;
+    limit?: number;
+}

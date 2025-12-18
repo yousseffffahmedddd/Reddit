@@ -20,6 +20,8 @@ import {
   AtSign,
   Users,
   Check,
+  MessageCircle,
+  Bot,
 } from 'lucide-react';
 import { cn, formatTimeAgo } from '@/lib/utils';
 import { Button, Avatar } from '@/components/ui';
@@ -290,6 +292,22 @@ export function Header({ onMenuClick }: HeaderProps) {
                       >
                         <User className="h-4 w-4" />
                         Profile
+                      </Link>
+                      <Link
+                        href="/chat"
+                        className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        Chat
+                      </Link>
+                      <Link
+                        href="/ask"
+                        className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <Bot className="h-4 w-4" />
+                        Ask AI
                       </Link>
                       <Link
                         href="/settings"

@@ -1,5 +1,11 @@
 'use client';
 
+// TODO: Notifications API is NOT implemented in the backend
+// All notification hooks are stubbed until backend implements:
+// - GET /api/notifications
+// - PATCH /api/notifications/:id/read
+// - PATCH /api/notifications/read-all
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Notification } from '@/types';
 
@@ -8,38 +14,30 @@ interface NotificationsResponse {
   unreadCount: number;
 }
 
+// Stub implementation that returns empty data
 async function fetchNotifications(): Promise<NotificationsResponse> {
-  const res = await fetch('/api/notifications');
-  if (!res.ok) {
-    if (res.status === 401) {
-      return { notifications: [], unreadCount: 0 };
-    }
-    throw new Error('Failed to fetch notifications');
-  }
-  return res.json();
+  // Backend doesn't have notifications endpoint
+  // Return empty data to prevent errors
+  return { notifications: [], unreadCount: 0 };
 }
 
-async function markAsRead(id: string): Promise<Notification> {
-  const res = await fetch(`/api/notifications/${id}/read`, {
-    method: 'PATCH',
-  });
-  if (!res.ok) throw new Error('Failed to mark notification as read');
-  return res.json();
+async function markAsRead(_id: string): Promise<Notification | null> {
+  // Backend doesn't have this endpoint
+  console.warn('markAsRead: Notifications not implemented in backend');
+  return null;
 }
 
 async function markAllAsRead(): Promise<void> {
-  const res = await fetch('/api/notifications/read-all', {
-    method: 'PATCH',
-  });
-  if (!res.ok) throw new Error('Failed to mark all notifications as read');
+  // Backend doesn't have this endpoint
+  console.warn('markAllAsRead: Notifications not implemented in backend');
 }
 
 export function useNotifications() {
   return useQuery({
     queryKey: ['notifications'],
     queryFn: fetchNotifications,
-    refetchInterval: 30000, // Refetch every 30 seconds
-    staleTime: 10000, // Consider data stale after 10 seconds
+    refetchInterval: 30000,
+    staleTime: 10000,
   });
 }
 
@@ -104,3 +102,4 @@ export function useMarkAllNotificationsAsRead() {
     },
   });
 }
+

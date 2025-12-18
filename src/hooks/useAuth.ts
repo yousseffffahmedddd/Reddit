@@ -2,8 +2,16 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AuthUser, LoginInput, RegisterInput, AuthResponse } from '@/types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+    loginUser,
+    signupUser,
+    logout as logoutApi,
+    setToken,
+    setUserId,
+    type AuthResponse
+} from '@/apis/authApi';
+import type { AuthUser, LoginInput, RegisterInput } from '@/types';
 
 interface AuthState {
   user: AuthUser | null;
@@ -19,8 +27,18 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isAuthenticated: false,
-      setAuth: (user, token) => set({ user, token, isAuthenticated: true }),
-      clearAuth: () => set({ user: null, token: null, isAuthenticated: false }),
+      setAuth: (user, token) => {
+        // Store in localStorage for API calls
+        setToken(token);
+        setUserId(user.id);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('user', JSON.stringify(user));
+        }
+        set({ user, token, isAuthenticated: true });
+      },
+      clearAuth: () => {
+        set({ user: null, token: null, isAuthenticated: false });
+      },
     }),
     {
       name: 'auth-storage',
@@ -28,40 +46,46 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
-async function login(input: LoginInput): Promise<AuthResponse> {
-  const res = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || 'Login failed');
+// Transform backend response to frontend AuthUser type
+function transformAuthResponse(response: AuthResponse): { user: AuthUser; token: string } {
+  if (!response.user || !response.token) {
+    throw new Error('Invalid auth response');
   }
-  return res.json();
+
+  return {
+    user: {
+      id: response.user.id,
+      username: response.user.username,
+      email: response.user.email,
+      displayName: response.user.username,
+      avatarUrl: null,
+      karma: 0,
+      cakeDay: new Date().toISOString(),
+      bio: null,
+      createdAt: new Date().toISOString(),
+    },
+    token: response.token,
+  };
 }
 
-async function register(input: RegisterInput): Promise<AuthResponse> {
-  const res = await fetch('/api/auth/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
+async function login(input: LoginInput): Promise<{ user: AuthUser; token: string }> {
+  // Backend expects email for login
+  const response = await loginUser({
+    email: input.username.includes('@') ? input.username : input.username,
+    password: input.password,
   });
-  if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || 'Registration failed');
-  }
-  return res.json();
+
+  return transformAuthResponse(response);
 }
 
-async function logout(): Promise<void> {
-  await fetch('/api/auth/logout', { method: 'POST' });
-}
+async function register(input: RegisterInput): Promise<{ user: AuthUser; token: string }> {
+  const response = await signupUser({
+    username: input.username,
+    email: input.email,
+    password: input.password,
+  });
 
-async function fetchCurrentUser(): Promise<AuthUser> {
-  const res = await fetch('/api/auth/me');
-  if (!res.ok) throw new Error('Not authenticated');
-  return res.json();
+  return transformAuthResponse(response);
 }
 
 export function useLogin() {
@@ -91,7 +115,7 @@ export function useLogout() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: logout,
+    mutationFn: logoutApi,
     onSuccess: () => {
       clearAuth();
       queryClient.clear();
@@ -99,13 +123,16 @@ export function useLogout() {
   });
 }
 
+// Note: useCurrentUser returns stored user from zustand
+// The backend doesn't have a GET /api/auth/me endpoint
 export function useCurrentUser() {
-  const { isAuthenticated, user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
 
-  return useQuery({
-    queryKey: ['currentUser'],
-    queryFn: fetchCurrentUser,
-    enabled: isAuthenticated,
-    initialData: user ?? undefined,
-  });
+  return {
+    data: user,
+    isAuthenticated,
+    isLoading: false,
+    isError: false,
+    error: null,
+  };
 }

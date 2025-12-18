@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronUp, ChevronDown, MessageSquare, MoreHorizontal, Trash2 } from 'lucide-react';
 import { cn, formatTimeAgo } from '@/lib/utils';
-import { Avatar, Button } from '@/components/ui';
+import { Avatar } from '@/components/ui';
 import { VoteButton } from '@/components/post/VoteButton';
 import { CommentForm } from './CommentForm';
 import { useAuthStore, useDeleteComment } from '@/hooks';
