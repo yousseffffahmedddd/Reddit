@@ -1,0 +1,225 @@
+// filepath: /home/awail/WebstormProjects/Reddit_clone/backend/src/controllers/commentController.ts
+import express from "express";
+import Comment from "../models/CommentSchema.ts";
+import Post from "../models/PostSchema.ts";
+
+type Request = express.Request;
+type Response = express.Response;
+
+// --- 1. CREATE COMMENT ---
+export const createComment = async (req: Request, res: Response) => {
+    try {
+        const { postId, userId, content, parentCommentId } = req.body;
+
+        if (!postId || !userId || !content) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        // Verify the post exists
+        const post = await Post.findById(postId);
+        if (!post) {
+            return res.status(404).json({ message: "Post not found" });
+        }
+
+        // If parentCommentId is provided, verify it exists
+        if (parentCommentId) {
+            const parentComment = await Comment.findById(parentCommentId);
+            if (!parentComment) {
+                return res.status(404).json({ message: "Parent comment not found" });
+            }
+        }
+
+        const newComment = await Comment.create({
+            postId,
+            userId,
+            content,
+            parentCommentId: parentCommentId || null,
+        });
+
+        // Populate user info before sending response
+        const populatedComment = await Comment.findById(newComment._id)
+            .populate("userId", "username profilePicture")
+            .lean();
+
+        res.status(201).json(populatedComment);
+    } catch (err) {
+        console.error("Error creating comment:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+// --- 2. GET COMMENTS BY POST ID ---
+export const getCommentsByPostId = async (req: Request, res: Response) => {
+    try {
+        const { postId } = req.params;
+
+        if (!postId) {
+            return res.status(400).json({ message: "Post ID is required" });
+        }
+
+        // Fetch all comments for this post
+        const comments = await Comment.find({ postId })
+            .populate("userId", "username profilePicture")
+            .sort({ createdAt: -1 })
+            .lean();
+
+        // Organize comments into a tree structure (parent comments with nested replies)
+        const commentMap = new Map();
+        const rootComments: any[] = [];
+
+        // First pass: Create a map of all comments
+        comments.forEach((comment: any) => {
+            commentMap.set(comment._id.toString(), { ...comment, replies: [] });
+        });
+
+        // Second pass: Build the tree structure
+        comments.forEach((comment: any) => {
+            const commentWithReplies = commentMap.get(comment._id.toString());
+            if (comment.parentCommentId) {
+                const parent = commentMap.get(comment.parentCommentId.toString());
+                if (parent) {
+                    parent.replies.push(commentWithReplies);
+                } else {
+                    // Parent not found, treat as root comment
+                    rootComments.push(commentWithReplies);
+                }
+            } else {
+                rootComments.push(commentWithReplies);
+            }
+        });
+
+        res.status(200).json(rootComments);
+    } catch (err) {
+        console.error("Error fetching comments:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+// --- 3. GET SINGLE COMMENT BY ID ---
+export const getCommentById = async (req: Request, res: Response) => {
+    try {
+        const { commentId } = req.params;
+
+        const comment = await Comment.findById(commentId)
+            .populate("userId", "username profilePicture")
+            .lean();
+
+        if (!comment) {
+            return res.status(404).json({ message: "Comment not found" });
+        }
+
+        res.status(200).json(comment);
+    } catch (err) {
+        console.error("Error fetching comment:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+// --- 4. UPDATE COMMENT ---
+export const updateComment = async (req: Request, res: Response) => {
+    try {
+        const { commentId } = req.params;
+        const { userId, content } = req.body;
+
+        if (!content) {
+            return res.status(400).json({ message: "Content is required" });
+        }
+
+        const comment = await Comment.findById(commentId);
+
+        if (!comment) {
+            return res.status(404).json({ message: "Comment not found" });
+        }
+
+        // Check if the user owns this comment
+        if (comment.userId.toString() !== userId) {
+            return res.status(403).json({ message: "Not authorized to edit this comment" });
+        }
+
+        comment.content = content;
+        await comment.save();
+
+        const updatedComment = await Comment.findById(commentId)
+            .populate("userId", "username profilePicture")
+            .lean();
+
+        res.status(200).json(updatedComment);
+    } catch (err) {
+        console.error("Error updating comment:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+// --- 5. DELETE COMMENT ---
+export const deleteComment = async (req: Request, res: Response) => {
+    try {
+        const { commentId } = req.params;
+        const { userId } = req.body;
+
+        const comment = await Comment.findById(commentId);
+
+        if (!comment) {
+            return res.status(404).json({ message: "Comment not found" });
+        }
+
+        // Check if the user owns this comment
+        if (comment.userId.toString() !== userId) {
+            return res.status(403).json({ message: "Not authorized to delete this comment" });
+        }
+
+        // Delete all replies to this comment (recursive deletion)
+        await deleteCommentAndReplies(commentId);
+
+        res.status(200).json({ message: "Comment deleted successfully" });
+    } catch (err) {
+        console.error("Error deleting comment:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+// Helper function to recursively delete comments and their replies
+const deleteCommentAndReplies = async (commentId: string) => {
+    // Find all replies to this comment
+    const replies = await Comment.find({ parentCommentId: commentId });
+
+    // Recursively delete each reply
+    for (const reply of replies) {
+        await deleteCommentAndReplies(reply._id.toString());
+    }
+
+    // Delete the comment itself
+    await Comment.findByIdAndDelete(commentId);
+};
+
+// --- 6. GET COMMENT COUNT FOR A POST ---
+export const getCommentCount = async (req: Request, res: Response) => {
+    try {
+        const { postId } = req.params;
+
+        const count = await Comment.countDocuments({ postId });
+
+        res.status(200).json({ count });
+    } catch (err) {
+        console.error("Error getting comment count:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+// --- 7. GET USER'S COMMENTS ---
+export const getUserComments = async (req: Request, res: Response) => {
+    try {
+        const { userId } = req.params;
+
+        const comments = await Comment.find({ userId })
+            .populate("postId", "title")
+            .populate("userId", "username profilePicture")
+            .sort({ createdAt: -1 })
+            .lean();
+
+        res.status(200).json(comments);
+    } catch (err) {
+        console.error("Error fetching user comments:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+

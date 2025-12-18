@@ -1,3 +1,5 @@
+// filepath: /frontend/apis/Communityapi.ts
+
 export interface CommunityData {
     _id: string;
     name: string;
@@ -8,7 +10,7 @@ export interface CommunityData {
 const API_URL = "http://localhost:3000/apis/Communityapi";
 const JOIN_URL = "http://localhost:3000/apis/Communityapi/join";
 
-// Get All Communities
+// 1. Get All Communities
 export const getAllCommunities = async (): Promise<CommunityData[]> => {
     try {
         const response = await fetch(API_URL);
@@ -20,7 +22,24 @@ export const getAllCommunities = async (): Promise<CommunityData[]> => {
     }
 };
 
-// Function to Join or Leave
+// 2. Search Communities
+export const searchCommunities = async (query: string): Promise<CommunityData[]> => {
+    try {
+
+        const response = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`);
+
+        if (!response.ok) {
+            throw new Error("Failed to search communities");
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("Search API Error:", error);
+        throw error;
+    }
+};
+
+// 3. Function to Join or Leave
 export const joinCommunity = async (communityId: string, userId: string) => {
     try {
         const response = await fetch(JOIN_URL, {
@@ -38,10 +57,9 @@ export const joinCommunity = async (communityId: string, userId: string) => {
     }
 };
 
-// 👇 Function to get communities a user has joined
+// 4. Function to get communities a user has joined
 export const getJoinedCommunities = async (userId: string): Promise<CommunityData[]> => {
     try {
-        // Calls the new backend endpoint: /apis/Communityapi/user/:userId
         const response = await fetch(`${API_URL}/user/${userId}`);
 
         if (!response.ok) {
