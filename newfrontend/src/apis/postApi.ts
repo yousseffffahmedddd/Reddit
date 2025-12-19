@@ -19,6 +19,7 @@ export interface BackendPost {
     upvotes: number;
     downvotes: number;
     userVote?: number;
+    commentCount?: number;
 }
 
 export interface CreatePostData {
@@ -47,8 +48,12 @@ export const createPost = async (postData: CreatePostData): Promise<BackendPost>
     return response.json();
 };
 
-export const fetchPosts = async (): Promise<BackendPost[]> => {
-    const response = await fetch(POST_API_URL);
+export const fetchPosts = async (userId?: string): Promise<BackendPost[]> => {
+    const url = userId
+        ? `${POST_API_URL}?userId=${userId}`
+        : POST_API_URL;
+
+    const response = await fetch(url);
 
     if (!response.ok) {
         throw new Error("Failed to fetch posts");

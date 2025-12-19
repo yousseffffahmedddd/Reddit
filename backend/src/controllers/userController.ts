@@ -146,3 +146,78 @@ export const deleteProfilePicture = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Error deleting profile picture" });
     }
 };
+
+// 5. Save/Unsave Post (Toggle)
+export const savePost = async (req: Request, res: Response) => {
+    try {
+        const { userId, postId } = req.body;
+
+        if (!userId || !postId) {
+            return res.status(400).json({ message: "User ID and Post ID are required" });
+        }
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Initialize savedPosts array if it doesn't exist
+        if (!user.savedPosts) {
+            user.savedPosts = [];
+        }
+
+        // Check if post is already saved
+        const postIndex = user.savedPosts.findIndex(
+            (id: any) => id.toString() === postId
+        );
+
+        let isSaved: boolean;
+
+        if (postIndex > -1) {
+            // Post is saved, remove it
+            user.savedPosts.splice(postIndex, 1);
+            isSaved = false;
+        } else {
+            // Post is not saved, add it
+            user.savedPosts.push(postId);
+            isSaved = true;
+        }
+
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            isSaved,
+            savedPosts: user.savedPosts
+        });
+    } catch (error) {
+        console.error("Save Post Error:", error);
+        res.status(500).json({ message: "Error saving post" });
+    }
+};
+
+// 6. Get Saved Posts
+export const getSavedPosts = async (req: Request, res: Response) => {
+    try {
+        const { userId } = req.params;
+
+        if (!userId) {
+            return res.status(400).json({ message: "User ID is required" });
+        }
+
+        const user = await User.findById(userId).select("savedPosts");
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.status(200).json({
+            savedPosts: user.savedPosts || []
+        });
+    } catch (error) {
+        console.error("Get Saved Posts Error:", error);
+        res.status(500).json({ message: "Error getting saved posts" });
+    }
+};
+

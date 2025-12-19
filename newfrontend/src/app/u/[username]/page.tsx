@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, Award, FileText, MessageSquare, Bookmark, Edit2 } from 'lucide-react';
+import { Calendar, Award, FileText, MessageSquare, Edit2 } from 'lucide-react';
 import { cn, formatNumber, formatDate, formatTimeAgo } from '@/lib/utils';
 import { Avatar, Loader, ErrorMessage, Button, ImageUpload, Modal, Input, Textarea } from '@/components/ui';
 import { PostList } from '@/components/post';
@@ -11,7 +11,7 @@ import { useUser, useUserComments } from '@/hooks';
 import { useAuthStore } from '@/hooks/useAuth';
 import { useUploadProfilePicture, useDeleteProfilePicture, useUpdateProfile } from '@/hooks/useUserProfile';
 
-type Tab = 'posts' | 'comments' | 'saved';
+type Tab = 'posts' | 'comments';
 
 function UserComments({ userId }: { userId: string }) {
   const { data: comments, isLoading, isError, error, refetch } = useUserComments(userId);
@@ -125,7 +125,6 @@ export default function UserProfilePage() {
   const tabs: { id: Tab; label: string; icon: typeof FileText }[] = [
     { id: 'posts', label: 'Posts', icon: FileText },
     { id: 'comments', label: 'Comments', icon: MessageSquare },
-    { id: 'saved', label: 'Saved', icon: Bookmark },
   ];
 
   return (
@@ -162,13 +161,11 @@ export default function UserProfilePage() {
             <p className="text-muted-foreground">u/{user.username}</p>
             {user.bio && <p className="mt-2 text-sm">{user.bio}</p>}
           </div>
-          {isOwnProfile ? (
+          {isOwnProfile && (
             <Button variant="outline" onClick={handleOpenEditModal}>
               <Edit2 className="mr-2 h-4 w-4" />
               Edit Profile
             </Button>
-          ) : (
-            <Button variant="outline">Follow</Button>
           )}
         </div>
 
@@ -248,11 +245,6 @@ export default function UserProfilePage() {
       <div className="max-w-2xl">
         {activeTab === 'posts' && <PostList userId={user.id} />}
         {activeTab === 'comments' && <UserComments userId={user.id} />}
-        {activeTab === 'saved' && (
-          <div className="rounded-md border bg-card p-8 text-center">
-            <p className="text-muted-foreground">Saved posts are private</p>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -137,3 +137,4 @@ export const getProfilePictureUrl = (profilePicture: string | null | undefined):
     return `${API_BASE_URL}${profilePicture}`;
 };
 
+

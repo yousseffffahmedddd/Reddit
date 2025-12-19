@@ -7,7 +7,8 @@ import {
     searchCommunities,
     updateCommunity,
     uploadCommunityIcon,
-    getCommunityById
+    getCommunityById,
+    getOwnedCommunities
 } from "../controllers/communityController";
 import { uploadCommunityImage } from "../middleware/upload";
 
@@ -19,6 +20,9 @@ router.post("/", createCommunity);
 router.post("/join", joinCommunity);
 
 router.get("/user/:userId", getJoinedCommunities);
+
+// Get communities owned/administered by user
+router.get("/owned/:userId", getOwnedCommunities);
 
 // Get single community by ID or name
 router.get("/:communityId", getCommunityById);

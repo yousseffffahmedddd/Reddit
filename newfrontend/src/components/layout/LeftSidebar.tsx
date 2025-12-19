@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Flame, TrendingUp, Star, Plus, MessageCircle, Bot, Settings } from 'lucide-react';
+import { Home, Plus, MessageCircle, Bot, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar } from '@/components/ui';
 import { useCommunities, useAuthStore, useOwnedCommunities } from '@/hooks';
@@ -26,8 +26,6 @@ export function LeftSidebar({ isOpen = true, onClose }: LeftSidebarProps) {
 
   const mainLinks = [
     { href: '/', label: 'Home', icon: Home },
-    { href: '/popular', label: 'Popular', icon: Flame },
-    { href: '/all', label: 'All', icon: TrendingUp },
     { href: '/ask', label: 'Ask AI', icon: Bot },
   ];
 
@@ -152,22 +150,6 @@ export function LeftSidebar({ isOpen = true, onClose }: LeftSidebarProps) {
             })}
           </nav>
         </div>
-
-        {/* Favorites */}
-        {isAuthenticated && (
-          <>
-            <hr className="my-4" />
-            <div>
-              <div className="mb-2 flex items-center gap-2 px-3">
-                <Star className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs font-medium uppercase text-muted-foreground">Favorites</span>
-              </div>
-              <p className="px-3 text-xs text-muted-foreground">
-                Star communities to add them to your favorites
-              </p>
-            </div>
-          </>
-        )}
       </div>
 
       <CreateCommunityModal

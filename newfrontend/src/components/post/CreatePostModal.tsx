@@ -6,231 +6,242 @@ import { Button, Input, Textarea, Modal } from '@/components/ui';
 import { useCreatePost, useCommunities, useUpdatePost } from '@/hooks';
 import type { PostType } from '@/types';
 
+const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
 interface CreatePostModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  defaultCommunityId?: string;
-  initialData?: {
-    id?: string;
-    title: string;
-    content: string;
-    type: PostType;
-    imageUrl: string;
-    linkUrl: string;
-    communityId: string;
-  };
+    isOpen: boolean;
+    onClose: () => void;
+    defaultCommunityId?: string;
+    initialData?: {
+        id?: string;
+        title: string;
+        content: string;
+        type: PostType;
+        imageUrl: string;
+        linkUrl: string;
+        communityId: string;
+    };
 }
 
-export function CreatePostModal({ isOpen, onClose, defaultCommunityId, initialData }: CreatePostModalProps) {
-  const [postType, setPostType] = useState<PostType>(initialData?.type || 'text');
-  const [title, setTitle] = useState(initialData?.title || '');
-  const [content, setContent] = useState(initialData?.content || '');
-  const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || '');
-  const [linkUrl, setLinkUrl] = useState(initialData?.linkUrl || '');
-  const [communityId, setCommunityId] = useState(initialData?.communityId || defaultCommunityId || '');
+export function CreatePostModal({
+                                    isOpen,
+                                    onClose,
+                                    defaultCommunityId,
+                                    initialData,
+                                }: CreatePostModalProps) {
 
-  const { data: communitiesData } = useCommunities();
-  const { mutate: createPost, isPending: isCreating, error: createError } = useCreatePost();
-  const { mutate: updatePost, isPending: isUpdating, error: updateError } = useUpdatePost();
+    /* =====================================================
+       🔴 CHANGE #1
+       Store selected image as a File (NOT uploading yet)
+       and a local preview URL
+    ===================================================== */
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string>('');
 
-  const communities = communitiesData?.data || [];
+    const [postType, setPostType] = useState<PostType>(
+        initialData?.type || 'text'
+    );
+    const [title, setTitle] = useState(initialData?.title || '');
+    const [content, setContent] = useState(initialData?.content || '');
+    const [linkUrl, setLinkUrl] = useState(initialData?.linkUrl || '');
+    const [communityId, setCommunityId] = useState(
+        initialData?.communityId || defaultCommunityId || ''
+    );
 
-  const isEditMode = !!initialData?.id;
-  const isPending = isCreating || isUpdating;
-  const error = createError || updateError;
+    const { data: communitiesData } = useCommunities();
+    const { mutate: createPost, isPending: isCreating, error: createError } =
+        useCreatePost();
+    const { mutate: updatePost, isPending: isUpdating, error: updateError } =
+        useUpdatePost();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    const communities = communitiesData?.data || [];
+    const isEditMode = !!initialData?.id;
+    const isPending = isCreating || isUpdating;
+    const error = createError || updateError;
 
-    if (!title.trim() || !communityId) return;
+    /* =====================================================
+       🔴 CHANGE #2
+       Upload image ONLY inside submit handler
+    ===================================================== */
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!title.trim() || !communityId) return;
 
-    if (isEditMode) {
-      updatePost(
-        {
-          postId: initialData!.id!,
-          title: title.trim(),
-          content: postType === 'text' ? content.trim() : undefined,
-        },
-        {
-          onSuccess: () => {
-            resetForm();
-            onClose();
-          },
+        let uploadedImageUrl: string | undefined;
+
+        if (postType === 'image' && imageFile) {
+            const formData = new FormData();
+            formData.append('image', imageFile);
+
+            const res = await fetch(
+                `${API_BASE_URL}/apis/Postapi/upload`,
+                { method: 'POST', body: formData }
+            );
+
+            if (!res.ok) {
+                console.error('Image upload failed');
+                return;
+            }
+
+            const data = await res.json();
+            uploadedImageUrl = data.imageUrl;
         }
-      );
-    } else {
-      createPost(
-        {
-          title: title.trim(),
-          content: postType === 'text' ? content.trim() : undefined,
-          type: postType,
-          imageUrl: postType === 'image' ? imageUrl.trim() : undefined,
-          linkUrl: postType === 'link' ? linkUrl.trim() : undefined,
-          communityId,
-        },
-        {
-          onSuccess: () => {
-            resetForm();
-            onClose();
-          },
+
+        const payload = {
+            title: title.trim(),
+            content: postType === 'text' ? content.trim() : undefined,
+            type: postType,
+            imageUrl: uploadedImageUrl,
+            linkUrl: postType === 'link' ? linkUrl.trim() : undefined,
+            communityId,
+        };
+
+        if (isEditMode) {
+            updatePost(
+                { postId: initialData!.id!, ...payload },
+                { onSuccess: handleClose }
+            );
+        } else {
+            createPost(payload, { onSuccess: handleClose });
         }
-      );
-    }
-  };
+    };
 
-  const resetForm = () => {
-    setTitle('');
-    setContent('');
-    setImageUrl('');
-    setLinkUrl('');
-    setPostType('text');
-    setCommunityId(defaultCommunityId || '');
-  };
+    const handleClose = () => {
+        resetForm();
+        onClose();
+    };
 
-  const postTypes: { type: PostType; icon: typeof FileText; label: string }[] = [
-    { type: 'text', icon: FileText, label: 'Post' },
-    { type: 'image', icon: Image, label: 'Image' },
-    { type: 'link', icon: Link2, label: 'Link' },
-  ];
+    /* =====================================================
+       🔴 CHANGE #3
+       Reset image file & preview so canceled posts
+       do not leave orphan images
+    ===================================================== */
+    const resetForm = () => {
+        setTitle('');
+        setContent('');
+        setLinkUrl('');
+        setPostType('text');
+        setCommunityId(defaultCommunityId || '');
+        setImageFile(null);
+        setImagePreview('');
+    };
 
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Create Post" className="max-w-2xl">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Community selector */}
-        <div>
-          <label className="mb-1 block text-sm font-medium">Community</label>
-          <select
-            value={communityId}
-            onChange={(e) => setCommunityId(e.target.value)}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            required
-            disabled={isPending}
-          >
-            <option value="">Choose a community</option>
-            {communities.map((community) => (
-              <option key={community.id} value={community.id}>
-                r/{community.name}
-              </option>
-            ))}
-          </select>
-        </div>
+    const postTypes = [
+        { type: 'text' as PostType, icon: FileText, label: 'Post' },
+        { type: 'image' as PostType, icon: Image, label: 'Image' },
+        { type: 'link' as PostType, icon: Link2, label: 'Link' },
+    ];
 
-        {/* Post type tabs */}
-        <div className="flex gap-2 border-b">
-          {postTypes.map(({ type, icon: Icon, label }) => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => setPostType(type)}
-              className={`flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
-                postType === type
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </button>
-          ))}
-        </div>
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} title="Create Post" className="max-w-2xl">
+            <form onSubmit={handleSubmit} className="space-y-4">
 
-        {/* Title */}
-        <div>
-          <Input
-            placeholder="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={300}
-            required
-            disabled={isPending}
-          />
-          <p className="mt-1 text-xs text-muted-foreground">{title.length}/300</p>
-        </div>
+                {/* Community */}
+                <select
+                    value={communityId}
+                    onChange={(e) => setCommunityId(e.target.value)}
+                    className="w-full rounded-md border px-3 py-2"
+                    required
+                >
+                    <option value="">Choose a community</option>
+                    {communities.map((c) => (
+                        <option key={c.id} value={c.id}>
+                            r/{c.name}
+                        </option>
+                    ))}
+                </select>
 
-        {/* Content based on type */}
-        {postType === 'text' && (
-          <Textarea
-            placeholder="Text (optional)"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={6}
-            disabled={isPending}
-          />
-        )}
+                {/* Tabs */}
+                <div className="flex gap-2 border-b">
+                    {postTypes.map(({ type, icon: Icon, label }) => (
+                        <button
+                            key={type}
+                            type="button"
+                            onClick={() => setPostType(type)}
+                            className={`flex items-center gap-2 border-b-2 px-4 py-2 ${
+                                postType === type
+                                    ? 'border-primary text-primary'
+                                    : 'border-transparent'
+                            }`}
+                        >
+                            <Icon className="h-4 w-4" />
+                            {label}
+                        </button>
+                    ))}
+                </div>
 
-        {postType === 'image' && (
-          <div className="space-y-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium">Upload Image</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const formData = new FormData();
-                    formData.append('image', file);
-                    
-                    try {
-                      const response = await fetch('/apis/Postapi/upload', {
-                        method: 'POST',
-                        body: formData,
-                      });
-                      
-                      if (response.ok) {
-                        const data = await response.json();
-                        setImageUrl(data.imageUrl);
-                      } else {
-                        console.error('Upload failed');
-                      }
-                    } catch (error) {
-                      console.error('Upload error:', error);
-                    }
-                  }
-                }}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              />
-            </div>
-            {imageUrl && (
-              <div className="relative">
-                <img
-                  src={imageUrl}
-                  alt="Preview"
-                  className="max-h-64 rounded-md object-contain"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
+                {/* Title */}
+                <Input
+                    placeholder="Title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    maxLength={300}
+                    required
                 />
-              </div>
-            )}
-          </div>
-        )}
 
-        {postType === 'link' && (
-          <Input
-            placeholder="URL"
-            value={linkUrl}
-            onChange={(e) => setLinkUrl(e.target.value)}
-            type="url"
-            required={postType === 'link'}
-          />
-        )}
+                {/* Text */}
+                {postType === 'text' && (
+                    <Textarea
+                        placeholder="Text (optional)"
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        rows={6}
+                    />
+                )}
 
-        {/* Error */}
-        {error && (
-          <p className="text-sm text-destructive">{error.message}</p>
-        )}
+                {/* =====================================================
+            🔴 CHANGE #4
+            Image selection ONLY sets local preview
+        ===================================================== */}
+                {postType === 'image' && (
+                    <div className="space-y-2">
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
 
-        {/* Actions */}
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" isLoading={isPending} disabled={!title.trim() || !communityId}>
-            Post
-          </Button>
-        </div>
-      </form>
-    </Modal>
-  );
+                                setImageFile(file);
+                                setImagePreview(URL.createObjectURL(file));
+                            }}
+                            className="w-full rounded-md border px-3 py-2"
+                        />
+
+                        {imagePreview && (
+                            <img
+                                src={imagePreview}
+                                alt="Preview"
+                                className="max-h-64 rounded-md object-contain"
+                            />
+                        )}
+                    </div>
+                )}
+
+                {/* Link */}
+                {postType === 'link' && (
+                    <Input
+                        placeholder="URL"
+                        value={linkUrl}
+                        onChange={(e) => setLinkUrl(e.target.value)}
+                        type="url"
+                        required
+                    />
+                )}
+
+                {error && <p className="text-sm text-destructive">{error.message}</p>}
+
+                {/* Actions */}
+                <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={onClose}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" isLoading={isPending}>
+                        Post
+                    </Button>
+                </div>
+            </form>
+        </Modal>
+    );
 }

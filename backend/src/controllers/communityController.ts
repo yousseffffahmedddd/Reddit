@@ -247,3 +247,34 @@ export const getCommunityById = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Error fetching community", error });
     }
 };
+
+// 9. Get Communities where user is admin (owned communities)
+export const getOwnedCommunities = async (req: Request, res: Response) => {
+    try {
+        const { userId } = req.params;
+
+        if (!userId) {
+            return res.status(400).json({ message: "User ID is required" });
+        }
+
+        // Find all community roles where user is admin
+        const adminRoles = await CommunityRole.find({
+            userId: userId,
+            role: "admin"
+        });
+
+        // Get the community IDs
+        const communityIds = adminRoles.map(role => role.communityId);
+
+        // Fetch the communities
+        const communities = await Community.find({
+            _id: { $in: communityIds }
+        });
+
+        res.status(200).json(communities);
+    } catch (error) {
+        console.error("Get Owned Communities Error:", error);
+        res.status(500).json({ message: "Error fetching owned communities", error });
+    }
+};
+

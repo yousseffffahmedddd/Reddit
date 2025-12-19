@@ -4,7 +4,9 @@ import {
     getUserByUsername,
     updateUserProfile,
     uploadProfilePicture,
-    deleteProfilePicture
+    deleteProfilePicture,
+    savePost,
+    getSavedPosts
 } from "../controllers/userController";
 import { uploadProfilePicture as uploadMiddleware } from "../middleware/upload";
 
@@ -21,5 +23,11 @@ router.post("/profile/picture", uploadMiddleware.single("profilePicture"), uploa
 
 // DELETE profile picture: http://localhost:3000/api/users/profile/picture
 router.delete("/profile/picture", deleteProfilePicture);
+
+// POST save/unsave post (toggle): http://localhost:3000/api/users/save-post
+router.post("/save-post", savePost);
+
+// GET saved posts: http://localhost:3000/api/users/saved-posts/:userId
+router.get("/saved-posts/:userId", getSavedPosts);
 
 export default router;

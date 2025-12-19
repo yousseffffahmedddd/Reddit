@@ -5,6 +5,7 @@ import path from "path";
 import Post from "../models/PostSchema.ts";
 import User from "../models/UserSchema.ts";
 import Community from "../models/CommunitySchema.ts";
+import Comment from "../models/CommentSchema.ts";
 
 // Get the project root directory
 const PROJECT_ROOT = path.resolve(process.cwd());
@@ -103,20 +104,24 @@ export const createPost = async (req: Request, res: Response) => {
 // --- 2. GET ALL POSTS (Missing) ---
 export const getAllPosts = async (req: Request, res: Response) => {
     try {
-        // Get posts without populate first
-        const posts = await Post.find().lean();
+        const { userId } = req.query; // Optional: current user ID to check their votes
 
-        // Manually populate author and community
+        // Get posts without populate first
+        const posts = await Post.find().sort({ createdAt: -1 }).lean();
+
+        // Manually populate author, community, and get comment counts
         const populatedPosts = await Promise.all(
             posts.map(async (post: any) => {
                 try {
                     const author = await User.findById(post.author).select('username').lean();
                     const community = await Community.findById(post.community).select('name').lean();
+                    const commentCount = await Comment.countDocuments({ postId: post._id });
 
                     let processedPost = {
                         ...post,
                         author: author ? { _id: author._id, username: author.username } : { _id: post.author, username: 'Unknown' },
                         community: community ? { _id: community._id, name: community.name } : { _id: post.community, name: 'Unknown' },
+                        commentCount,
                     };
 
                     // Convert image URL to data URL to hide the file path
@@ -159,16 +164,22 @@ export const getAllPosts = async (req: Request, res: Response) => {
             const upvotes = post.votes ? post.votes.filter((v: any) => v.value === 1).length : 0;
             const downvotes = post.votes ? post.votes.filter((v: any) => v.value === -1).length : 0;
 
-            // Optional: Check if current user voted (requires userId from query or auth)
-            // const currentUserId = req.query.userId;
-            // const userVote = post.votes.find(v => v.userId === currentUserId)?.value || 0;
+            // Check if current user voted
+            let userVote = 0;
+            if (userId && post.votes) {
+                const userVoteObj = post.votes.find((v: any) => v.userId.toString() === userId);
+                if (userVoteObj) {
+                    userVote = userVoteObj.value;
+                }
+            }
 
             return {
                 ...post,
                 score,
                 upvotes,
                 downvotes,
-                userVote: 0 // Defaulting to 0 since fetchPosts currently doesn't send userId
+                userVote,
+                commentCount: post.commentCount || 0
             };
         });
 

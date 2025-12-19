@@ -109,17 +109,16 @@ export const getJoinedCommunities = async (userId: string): Promise<CommunityDat
     }
 };
 
-// 5. Function to get communities owned/created by a user
-// Since the backend doesn't have a specific endpoint, we filter all communities
-// where the user is the first member (creator) or matches ownerId
+// 5. Function to get communities owned/created by a user (where user is admin)
 export const getOwnedCommunities = async (userId: string): Promise<CommunityData[]> => {
     try {
-        const allCommunities = await getAllCommunities();
-        // Filter communities where the user is the owner (first member = creator)
-        return allCommunities.filter(community =>
-            community.ownerId === userId ||
-            (community.members && community.members[0] === userId)
-        );
+        const response = await fetch(`${API_URL}/owned/${userId}`);
+
+        if (!response.ok) {
+            throw new Error("Failed to fetch owned communities");
+        }
+
+        return await response.json();
     } catch (error) {
         console.error("API Error (Owned Communities):", error);
         throw error;

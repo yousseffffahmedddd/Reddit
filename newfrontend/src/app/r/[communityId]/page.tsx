@@ -65,11 +65,15 @@ export default function CommunityPage() {
     try {
       // Upload icon if selected
       if (selectedIconFile) {
+        console.log('Uploading icon for community:', community.id);
         await uploadCommunityIcon({ communityId: community.id, file: selectedIconFile });
+        console.log('Icon uploaded successfully');
       }
 
       // Update description
+      console.log('Updating community:', community.id, 'with description:', editDescription);
       await updateCommunity({ communityId: community.id, description: editDescription });
+      console.log('Community updated successfully');
 
       setShowEditModal(false);
       setIconPreview(null);

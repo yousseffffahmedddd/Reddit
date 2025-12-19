@@ -10,6 +10,7 @@ export interface IUser extends Document {
     createdAt: Date;
     googleId?: string; // Google OAuth ID
     avatarUrl?: string; // Avatar URL from OAuth
+    savedPosts: mongoose.Types.ObjectId[]; // Array of saved post IDs
 }
 
 const UserSchema: Schema = new Schema({
@@ -22,6 +23,7 @@ const UserSchema: Schema = new Schema({
     createdAt: { type: Date, default: Date.now },
     googleId: { type: String, required: false }, // Google OAuth ID
     avatarUrl: { type: String, default: null }, // Avatar URL from OAuth
+    savedPosts: [{ type: Schema.Types.ObjectId, ref: "Post", default: [] }],
 }, {
     collection: "users" // Force collection name to be 'users'
 });

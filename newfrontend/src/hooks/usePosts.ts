@@ -17,19 +17,33 @@ import type { Post, PaginatedResponse, CreatePostInput, UpdatePostInput, PostSor
 // Transform backend post to frontend format
 function transformPost(backendPost: BackendPost): Post {
   // Handle both populated objects and plain string IDs
-  const authorId = typeof backendPost.author === 'string'
-    ? backendPost.author
-    : backendPost.author?._id || 'unknown';
-  const authorUsername = typeof backendPost.author === 'string'
-    ? 'Unknown'
-    : backendPost.author?.username || 'Unknown';
+  // The backend always returns objects like { _id: '...', username: '...' } or { _id: '...', name: '...' }
+  // But in some cases, it might be a plain string ID
+  let authorId = 'unknown';
+  let authorUsername = 'Unknown';
 
-  const communityId = typeof backendPost.community === 'string'
-    ? backendPost.community
-    : backendPost.community?._id || 'unknown';
-  const communityName = typeof backendPost.community === 'string'
-    ? 'Unknown'
-    : backendPost.community?.name || 'Unknown';
+  if (backendPost.author) {
+    if (typeof backendPost.author === 'string') {
+      authorId = backendPost.author;
+      authorUsername = 'Unknown';
+    } else if (typeof backendPost.author === 'object') {
+      authorId = backendPost.author._id || 'unknown';
+      authorUsername = backendPost.author.username || 'Unknown';
+    }
+  }
+
+  let communityId = 'unknown';
+  let communityName = 'Unknown';
+
+  if (backendPost.community) {
+    if (typeof backendPost.community === 'string') {
+      communityId = backendPost.community;
+      communityName = 'Unknown';
+    } else if (typeof backendPost.community === 'object') {
+      communityId = backendPost.community._id || 'unknown';
+      communityName = backendPost.community.name || 'Unknown';
+    }
+  }
 
   return {
     id: backendPost._id,
@@ -64,7 +78,7 @@ function transformPost(backendPost: BackendPost): Post {
     },
     upvotes: backendPost.upvotes || 0,
     downvotes: backendPost.downvotes || 0,
-    commentCount: 0,
+    commentCount: backendPost.commentCount || 0,
     userVote: (backendPost.userVote || 0) as 0 | 1 | -1,
     isSaved: false,
     createdAt: backendPost.createdAt,
@@ -81,7 +95,8 @@ interface FetchPostsParams {
 }
 
 async function fetchPosts(params: FetchPostsParams): Promise<PaginatedResponse<Post>> {
-  const backendPosts = await fetchPostsApi();
+  const currentUserId = getUserId();
+  const backendPosts = await fetchPostsApi(currentUserId || undefined);
 
   // Transform and filter posts on client side
   let posts = backendPosts.map(transformPost);
@@ -166,9 +181,6 @@ async function voteOnPost(postId: string, value: number): Promise<void> {
   await voteOnPostApi(postId, userId, value);
 }
 
-async function savePost(_postId: string): Promise<{ isSaved: boolean }> {
-  throw new Error('Save post not implemented in backend');
-}
 
 export function usePosts(params: Omit<FetchPostsParams, 'cursor'> = {}) {
   return useInfiniteQuery({
@@ -295,14 +307,3 @@ queryClient.setQueriesData(
   });
 }
 
-
-export function useSavePost() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: savePost,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-    },
-  });
-}
