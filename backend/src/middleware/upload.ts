@@ -14,6 +14,12 @@ if (!fs.existsSync(postsUploadDir)) {
     fs.mkdirSync(postsUploadDir, { recursive: true });
 }
 
+// Ensure communities uploads directory exists
+const communitiesUploadDir = path.join(__dirname, "../../uploads/communities");
+if (!fs.existsSync(communitiesUploadDir)) {
+    fs.mkdirSync(communitiesUploadDir, { recursive: true });
+}
+
 // Configure storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -70,6 +76,28 @@ export const uploadPostImage = multer({
     fileFilter,
     limits: {
         fileSize: 10 * 1024 * 1024, // 10MB max file size for posts
+    },
+});
+
+// Configure storage for community images
+const communityStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, communitiesUploadDir);
+    },
+    filename: (req, file, cb) => {
+        // Create unique filename: community-timestamp.extension
+        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+        const ext = path.extname(file.originalname);
+        cb(null, `community-${uniqueSuffix}${ext}`);
+    },
+});
+
+// Create multer instance for community images
+export const uploadCommunityImage = multer({
+    storage: communityStorage,
+    fileFilter,
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB max file size for community icons
     },
 });
 

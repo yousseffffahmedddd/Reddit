@@ -9,6 +9,7 @@ import {
     updateComment as updateCommentApi,
     getCommentCount,
     getUserComments,
+    voteOnComment as voteOnCommentApi,
     type BackendComment,
 } from '@/apis/commentApi';
 import { getProfilePictureUrl } from '@/apis/userApi';
@@ -34,9 +35,9 @@ function transformComment(backendComment: BackendComment): Comment {
         },
         postId: backendComment.postId,
         parentId: backendComment.parentCommentId,
-        upvotes: 0,
-        downvotes: 0,
-        userVote: 0,
+        upvotes: backendComment.upvotes || 0,
+        downvotes: backendComment.downvotes || 0,
+        userVote: (backendComment.userVote || 0) as 0 | 1 | -1,
         replies: backendComment.replies?.map(transformComment) || [],
         replyCount: backendComment.replies?.length || 0,
         isCollapsed: false,
@@ -51,7 +52,8 @@ interface FetchCommentsParams {
 }
 
 async function fetchComments(params: FetchCommentsParams): Promise<{ data: Comment[]; total: number }> {
-    const backendComments = await getCommentsByPostId(params.postId);
+    const userId = getUserId();
+    const backendComments = await getCommentsByPostId(params.postId, userId || undefined);
 
     const comments = backendComments.map(transformComment);
 
@@ -160,3 +162,20 @@ export function useUpdateComment() {
         },
     });
 }
+
+export function useVoteComment() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ commentId, postId, value }: { commentId: string; postId: string; value: number }) => {
+            const userId = getUserId();
+            if (!userId) throw new Error('Must be logged in to vote');
+
+            return voteOnCommentApi(commentId, userId, value);
+        },
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['comments', variables.postId] });
+        },
+    });
+}
+

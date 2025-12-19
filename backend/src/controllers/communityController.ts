@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import Community from "../models/CommunitySchema";
 import CommunityRole from "../models/CommunityRoleSchema";
+import path from "path";
+import fs from "fs";
 // 1. Get All Communities (Sorted by newest)
 export const getAllCommunities = async (req: Request, res: Response) => {
     try {
@@ -118,5 +120,130 @@ export const searchCommunities = async (req: Request, res: Response) => {
     } catch (error) {
         console.error("Search Error:", error);
         res.status(500).json({ message: "Error searching communities", error });
+    }
+};
+
+// 6. Update Community
+export const updateCommunity = async (req: Request, res: Response) => {
+    try {
+        const { communityId } = req.params;
+        const { userId, description } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({ message: "User ID is required" });
+        }
+
+        // Find the community
+        const community = await Community.findById(communityId);
+        if (!community) {
+            return res.status(404).json({ message: "Community not found" });
+        }
+
+        // Check if user is admin of this community
+        const userRole = await CommunityRole.findOne({
+            communityId: communityId,
+            userId: userId,
+            role: "admin"
+        });
+
+        if (!userRole) {
+            return res.status(403).json({ message: "Not authorized to update this community" });
+        }
+
+        // Update the community
+        if (description !== undefined) {
+            community.description = description;
+        }
+
+        await community.save();
+
+        res.status(200).json(community);
+    } catch (error) {
+        console.error("Update Community Error:", error);
+        res.status(500).json({ message: "Error updating community", error });
+    }
+};
+
+// 7. Upload Community Icon
+export const uploadCommunityIcon = async (req: any, res: Response) => {
+    try {
+        const { communityId } = req.params;
+        const { userId } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({ message: "User ID is required" });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        // Find the community
+        const community = await Community.findById(communityId);
+        if (!community) {
+            // Delete the uploaded file since community doesn't exist
+            fs.unlinkSync(req.file.path);
+            return res.status(404).json({ message: "Community not found" });
+        }
+
+        // Check if user is admin of this community
+        const userRole = await CommunityRole.findOne({
+            communityId: communityId,
+            userId: userId,
+            role: "admin"
+        });
+
+        if (!userRole) {
+            // Delete the uploaded file since user is not authorized
+            fs.unlinkSync(req.file.path);
+            return res.status(403).json({ message: "Not authorized to update this community" });
+        }
+
+        // Delete old icon if it exists
+        if (community.iconUrl) {
+            const oldIconPath = path.join(__dirname, "../../uploads/communities", path.basename(community.iconUrl));
+            if (fs.existsSync(oldIconPath)) {
+                fs.unlinkSync(oldIconPath);
+            }
+        }
+
+        // Create the URL for the uploaded file
+        const iconUrl = `/uploads/communities/${req.file.filename}`;
+
+        // Update community with new icon URL
+        community.iconUrl = iconUrl;
+        await community.save();
+
+        res.status(200).json({
+            message: "Community icon uploaded successfully",
+            community: community,
+            iconUrl: iconUrl
+        });
+    } catch (error) {
+        console.error("Upload Community Icon Error:", error);
+        res.status(500).json({ message: "Error uploading community icon" });
+    }
+};
+
+// 8. Get Community by ID or Name
+export const getCommunityById = async (req: Request, res: Response) => {
+    try {
+        const { communityId } = req.params;
+
+        // Try to find by ID first, then by name
+        let community = await Community.findById(communityId).catch(() => null);
+
+        if (!community) {
+            community = await Community.findOne({ name: communityId });
+        }
+
+        if (!community) {
+            return res.status(404).json({ message: "Community not found" });
+        }
+
+        res.status(200).json(community);
+    } catch (error) {
+        console.error("Get Community Error:", error);
+        res.status(500).json({ message: "Error fetching community", error });
     }
 };

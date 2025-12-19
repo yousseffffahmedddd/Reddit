@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { Camera } from 'lucide-react';
 import { Button, Input, Textarea, Modal } from '@/components/ui';
-import { createCommunity } from '@/apis/communityApi';
+import { createCommunity, uploadCommunityIcon } from '@/apis/communityApi';
 import { getUserId } from '@/apis/authApi';
 
 interface CreateCommunityModalProps {
@@ -17,6 +18,29 @@ export function CreateCommunityModal({ isOpen, onClose }: CreateCommunityModalPr
   const [description, setDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [iconFile, setIconFile] = useState<File | null>(null);
+  const [iconPreview, setIconPreview] = useState<string | null>(null);
+  const iconInputRef = useRef<HTMLInputElement>(null);
+
+  const handleIconSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        setError('Invalid file type. Please use JPEG, PNG, GIF, or WebP.');
+        return;
+      }
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('File too large. Maximum size is 5MB.');
+        return;
+      }
+      setIconFile(file);
+      setIconPreview(URL.createObjectURL(file));
+      setError(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,11 +77,22 @@ export function CreateCommunityModal({ isOpen, onClose }: CreateCommunityModalPr
     setError(null);
 
     try {
+      // Create the community first
       const newCommunity = await createCommunity({
         name,
         description: description || undefined,
         userId,
       });
+
+      // Upload icon if selected
+      if (iconFile) {
+        try {
+          await uploadCommunityIcon(newCommunity._id, userId, iconFile);
+        } catch (iconError) {
+          console.error('Failed to upload icon:', iconError);
+          // Continue even if icon upload fails
+        }
+      }
 
       handleClose();
       router.push(`/r/${newCommunity.name}`);
@@ -72,12 +107,65 @@ export function CreateCommunityModal({ isOpen, onClose }: CreateCommunityModalPr
     setDescription('');
     setError(null);
     setIsLoading(false);
+    setIconFile(null);
+    setIconPreview(null);
     onClose();
   };
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Create a Community">
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Community Icon */}
+        <div>
+          <label className="mb-2 block text-sm font-medium">
+            Community Icon (optional)
+          </label>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="h-16 w-16 overflow-hidden rounded-full bg-muted">
+                {iconPreview ? (
+                  <img
+                    src={iconPreview}
+                    alt="Community icon preview"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-xl font-bold text-muted-foreground">
+                    {name ? name.charAt(0).toUpperCase() : '?'}
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => iconInputRef.current?.click()}
+                className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity hover:opacity-100"
+              >
+                <Camera className="h-5 w-5 text-white" />
+              </button>
+            </div>
+            <div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => iconInputRef.current?.click()}
+              >
+                {iconPreview ? 'Change Icon' : 'Upload Icon'}
+              </Button>
+              <p className="mt-1 text-xs text-muted-foreground">
+                PNG, JPG, GIF or WebP. Max 5MB.
+              </p>
+            </div>
+            <input
+              ref={iconInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              onChange={handleIconSelect}
+              className="hidden"
+            />
+          </div>
+        </div>
+
         <div>
           <label htmlFor="community-name" className="mb-1 block text-sm font-medium">
             Name

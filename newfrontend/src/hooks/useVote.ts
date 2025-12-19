@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getUserId } from '@/apis/authApi';
 import { voteOnPost } from '@/apis/postApi';
+import { voteOnComment } from '@/apis/commentApi';
 import type { VoteInput, Post } from '@/types';
 
 async function submitVote(input: VoteInput) {
@@ -10,17 +11,8 @@ async function submitVote(input: VoteInput) {
   if (!userId) throw new Error('Must be logged in to vote');
 
   if (input.targetType === 'comment') {
-    // Comment voting
-    const response = await fetch(`/api/comments/${input.targetId}/vote`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ commentId: input.targetId, userId, value: input.value }),
-    });
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to vote on comment');
-    }
-    return response.json();
+    // Comment voting - use the proper API function
+    return voteOnComment(input.targetId, userId, input.value);
   }
 
   // Post voting

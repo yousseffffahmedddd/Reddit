@@ -9,12 +9,21 @@ export interface CommunityData {
     name: string;
     description?: string;
     members: string[];
+    ownerId?: string; // The creator of the community
+    createdAt?: string;
+    iconUrl?: string;
+    bannerUrl?: string;
 }
 
 export interface CreateCommunityData {
     name: string;
     description?: string;
     userId: string;
+}
+
+export interface UpdateCommunityData {
+    name?: string;
+    description?: string;
 }
 
 // 1. Get All Communities
@@ -98,5 +107,88 @@ export const getJoinedCommunities = async (userId: string): Promise<CommunityDat
         console.error("API Error (Joined Communities):", error);
         throw error;
     }
+};
+
+// 5. Function to get communities owned/created by a user
+// Since the backend doesn't have a specific endpoint, we filter all communities
+// where the user is the first member (creator) or matches ownerId
+export const getOwnedCommunities = async (userId: string): Promise<CommunityData[]> => {
+    try {
+        const allCommunities = await getAllCommunities();
+        // Filter communities where the user is the owner (first member = creator)
+        return allCommunities.filter(community =>
+            community.ownerId === userId ||
+            (community.members && community.members[0] === userId)
+        );
+    } catch (error) {
+        console.error("API Error (Owned Communities):", error);
+        throw error;
+    }
+};
+
+// 6. Update community
+export const updateCommunity = async (
+    communityId: string,
+    userId: string,
+    data: UpdateCommunityData
+): Promise<CommunityData> => {
+    try {
+        const response = await fetch(`${API_URL}/${communityId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, ...data }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Failed to update community");
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("Update Community API Error:", error);
+        throw error;
+    }
+};
+
+// 7. Upload community icon
+export const uploadCommunityIcon = async (
+    communityId: string,
+    userId: string,
+    file: File
+): Promise<{ message: string; community: CommunityData; iconUrl: string }> => {
+    try {
+        const formData = new FormData();
+        formData.append("userId", userId);
+        formData.append("icon", file);
+
+        const response = await fetch(`${API_URL}/${communityId}/icon`, {
+            method: "POST",
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Failed to upload community icon");
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("Upload Community Icon API Error:", error);
+        throw error;
+    }
+};
+
+// 8. Get community icon URL
+export const getCommunityIconUrl = (iconUrl: string | null | undefined): string | null => {
+    if (!iconUrl) {
+        return null;
+    }
+    // If it's already a full URL, return it
+    if (iconUrl.startsWith("http")) {
+        return iconUrl;
+    }
+    // Otherwise, prepend the backend URL
+    return `${API_BASE_URL}${iconUrl}`;
 };
 

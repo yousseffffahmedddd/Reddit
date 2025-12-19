@@ -19,6 +19,11 @@ export interface BackendComment {
     parentCommentId: string | null;
     createdAt: string;
     replies?: BackendComment[];
+    // Vote data
+    score?: number;
+    upvotes?: number;
+    downvotes?: number;
+    userVote?: number;
 }
 
 export interface CreateCommentData {
@@ -58,8 +63,12 @@ export const createComment = async (data: CreateCommentData): Promise<BackendCom
 /**
  * Get all comments for a post (with nested replies)
  */
-export const getCommentsByPostId = async (postId: string): Promise<BackendComment[]> => {
-    const response = await fetch(`${COMMENT_API_URL}/post/${postId}`);
+export const getCommentsByPostId = async (postId: string, userId?: string): Promise<BackendComment[]> => {
+    const url = userId
+        ? `${COMMENT_API_URL}/post/${postId}?userId=${userId}`
+        : `${COMMENT_API_URL}/post/${postId}`;
+
+    const response = await fetch(url);
 
     if (!response.ok) {
         throw new Error('Failed to fetch comments');
@@ -139,6 +148,28 @@ export const getUserComments = async (userId: string): Promise<BackendComment[]>
 
     if (!response.ok) {
         throw new Error('Failed to fetch user comments');
+    }
+
+    return response.json();
+};
+
+/**
+ * Vote on a comment
+ */
+export const voteOnComment = async (
+    commentId: string,
+    userId: string,
+    value: number
+): Promise<{ success: boolean; score: number; upvotes: number; downvotes: number }> => {
+    const response = await fetch(`${COMMENT_API_URL}/${commentId}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, value }),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to vote on comment');
     }
 
     return response.json();

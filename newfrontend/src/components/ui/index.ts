@@ -4,3 +4,4 @@ export { Loader, PageLoader, InlineLoader } from './Loader';
 export { ErrorBoundary, ErrorMessage } from './ErrorBoundary';
 export { Input, Textarea } from './Input';
 export { Modal, ConfirmDialog } from './Modal';
+export { ImageUpload } from './ImageUpload';

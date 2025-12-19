@@ -53,6 +53,7 @@ export const createComment = async (req: Request, res: Response) => {
 export const getCommentsByPostId = async (req: Request, res: Response) => {
     try {
         const { postId } = req.params;
+        const { userId } = req.query; // Optional: current user ID to check their votes
 
         if (!postId) {
             return res.status(400).json({ message: "Post ID is required" });
@@ -70,12 +71,21 @@ export const getCommentsByPostId = async (req: Request, res: Response) => {
             const upvotes = comment.votes ? comment.votes.filter((v: any) => v.value === 1).length : 0;
             const downvotes = comment.votes ? comment.votes.filter((v: any) => v.value === -1).length : 0;
 
+            // Check if current user has voted on this comment
+            let userVote = 0;
+            if (userId && comment.votes) {
+                const userVoteObj = comment.votes.find((v: any) => v.userId.toString() === userId);
+                if (userVoteObj) {
+                    userVote = userVoteObj.value;
+                }
+            }
+
             return {
                 ...comment,
                 score,
                 upvotes,
                 downvotes,
-                userVote: 0, // TODO: Check current user's vote
+                userVote,
             };
         });
 
@@ -242,10 +252,11 @@ export const getUserComments = async (req: Request, res: Response) => {
 // --- 8. VOTE ON COMMENT ---
 export const voteComment = async (req: Request, res: Response) => {
     try {
-        const { commentId, userId, value } = req.body;
+        const { commentId } = req.params;
+        const { userId, value } = req.body;
 
-        if (![1, -1].includes(value)) {
-            return res.status(400).json({ message: "Vote value must be 1 or -1" });
+        if (![1, -1, 0].includes(value)) {
+            return res.status(400).json({ message: "Vote value must be 1, -1, or 0" });
         }
 
         // Find comment
@@ -255,7 +266,12 @@ export const voteComment = async (req: Request, res: Response) => {
         // Check if user already voted
         const existingVoteIndex = comment.votes.findIndex((v: any) => v.userId.toString() === userId);
 
-        if (existingVoteIndex !== -1) {
+        if (value === 0) {
+            // Remove vote if exists
+            if (existingVoteIndex !== -1) {
+                comment.votes.splice(existingVoteIndex, 1);
+            }
+        } else if (existingVoteIndex !== -1) {
             // User already voted
             const existingVote = comment.votes[existingVoteIndex];
 
@@ -278,7 +294,11 @@ export const voteComment = async (req: Request, res: Response) => {
         const upvotes = comment.votes.filter((v: any) => v.value === 1).length;
         const downvotes = comment.votes.filter((v: any) => v.value === -1).length;
 
-        res.status(200).json({ success: true, score: newScore, upvotes, downvotes });
+        // Get user's current vote
+        const userVoteObj = comment.votes.find((v: any) => v.userId.toString() === userId);
+        const userVote = userVoteObj ? userVoteObj.value : 0;
+
+        res.status(200).json({ success: true, score: newScore, upvotes, downvotes, userVote });
 
     } catch (err) {
         console.error("Comment Vote Error:", err);
