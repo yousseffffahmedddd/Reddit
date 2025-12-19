@@ -1,5 +1,6 @@
 // filepath: /home/awail/WebstormProjects/Reddit_clone/backend/src/controllers/commentController.ts
 import express from "express";
+import mongoose from "mongoose";
 import Comment from "../models/CommentSchema.ts";
 import Post from "../models/PostSchema.ts";
 
@@ -63,17 +64,32 @@ export const getCommentsByPostId = async (req: Request, res: Response) => {
             .sort({ createdAt: -1 })
             .lean();
 
+        // Calculate scores for each comment
+        const commentsWithScores = comments.map((comment: any) => {
+            const score = comment.votes ? comment.votes.reduce((acc: number, vote: any) => acc + vote.value, 0) : 0;
+            const upvotes = comment.votes ? comment.votes.filter((v: any) => v.value === 1).length : 0;
+            const downvotes = comment.votes ? comment.votes.filter((v: any) => v.value === -1).length : 0;
+
+            return {
+                ...comment,
+                score,
+                upvotes,
+                downvotes,
+                userVote: 0, // TODO: Check current user's vote
+            };
+        });
+
         // Organize comments into a tree structure (parent comments with nested replies)
         const commentMap = new Map();
         const rootComments: any[] = [];
 
         // First pass: Create a map of all comments
-        comments.forEach((comment: any) => {
+        commentsWithScores.forEach((comment: any) => {
             commentMap.set(comment._id.toString(), { ...comment, replies: [] });
         });
 
         // Second pass: Build the tree structure
-        comments.forEach((comment: any) => {
+        commentsWithScores.forEach((comment: any) => {
             const commentWithReplies = commentMap.get(comment._id.toString());
             if (comment.parentCommentId) {
                 const parent = commentMap.get(comment.parentCommentId.toString());
@@ -219,6 +235,53 @@ export const getUserComments = async (req: Request, res: Response) => {
         res.status(200).json(comments);
     } catch (err) {
         console.error("Error fetching user comments:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+// --- 8. VOTE ON COMMENT ---
+export const voteComment = async (req: Request, res: Response) => {
+    try {
+        const { commentId, userId, value } = req.body;
+
+        if (![1, -1].includes(value)) {
+            return res.status(400).json({ message: "Vote value must be 1 or -1" });
+        }
+
+        // Find comment
+        const comment = await Comment.findById(commentId);
+        if (!comment) return res.status(404).json({ message: "Comment not found" });
+
+        // Check if user already voted
+        const existingVoteIndex = comment.votes.findIndex((v: any) => v.userId.toString() === userId);
+
+        if (existingVoteIndex !== -1) {
+            // User already voted
+            const existingVote = comment.votes[existingVoteIndex];
+
+            if (existingVote.value === value) {
+                // Toggling off (removing vote)
+                comment.votes.splice(existingVoteIndex, 1);
+            } else {
+                // Changing vote (e.g., up to down)
+                comment.votes[existingVoteIndex].value = value;
+            }
+        } else {
+            // New vote
+            comment.votes.push({ userId: new mongoose.Types.ObjectId(userId), value });
+        }
+
+        await comment.save();
+
+        // Return the new vote counts
+        const newScore = comment.votes.reduce((acc: number, v: any) => acc + v.value, 0);
+        const upvotes = comment.votes.filter((v: any) => v.value === 1).length;
+        const downvotes = comment.votes.filter((v: any) => v.value === -1).length;
+
+        res.status(200).json({ success: true, score: newScore, upvotes, downvotes });
+
+    } catch (err) {
+        console.error("Comment Vote Error:", err);
         res.status(500).json({ message: "Server error" });
     }
 };

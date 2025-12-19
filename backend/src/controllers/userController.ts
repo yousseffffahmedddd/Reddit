@@ -1,5 +1,6 @@
 
 import { Request, Response } from "express";
+import { Request as MulterRequest } from "express";
 import User from "../models/UserSchema";
 import path from "path";
 import fs from "fs";
@@ -56,7 +57,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 };
 
 // 3. Upload Profile Picture
-export const uploadProfilePicture = async (req: Request, res: Response) => {
+export const uploadProfilePicture = async (req: any, res: Response) => {
     try {
         const { userId } = req.body;
 

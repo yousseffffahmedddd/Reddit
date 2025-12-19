@@ -1,75 +1,41 @@
-// // src/routes/posts.ts
-// import express from "express";
-// import { createPost } from "../controllers/postController.ts";
-// import Post from "../models/PostSchema.ts";
-// const router = express.Router();
-
-// router.post("/", async (req, res) => {
-//   try {
-//     const { title, content, community, postType } = req.body;
-
-//     if (!title || !content || !community || !postType) {
-//       return res.status(400).json({ message: "Missing required fields" });
-//     }
-
-//     const newPost = await Post.create({ title, content, community, postType });
-
-//     res.status(201).json(newPost);
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// });
-// export default router;
-
 // src/routes/posts.ts
 import express from "express";
-import type { Request, Response } from "express"; // Use 'type' for TS interfaces
-import Post from "../models/PostSchema.ts";
+import { createPost, getAllPosts, votePost, getPostById, updatePost, deletePost } from "../controllers/postController";
+import { uploadPostImage } from "../middleware/upload";
 
 const router = express.Router();
 
-// Create a new post
-router.post("/", async (req, res) => {
-  try {
-    const { title, content, postType, author, community } = req.body;
-
-    // Validate required fields
-    if (!title || !content || !postType || !author || !community) {
-      return res.status(400).json({ message: "Missing required fields" });
+// Upload post image
+router.post("/upload", uploadPostImage.single("image"), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+        
+        const imageUrl = `/uploads/posts/${req.file.filename}`;
+        res.status(200).json({ imageUrl });
+    } catch (error) {
+        console.error("Upload error:", error);
+        res.status(500).json({ message: "Upload failed" });
     }
-
-    // Create the post in DB
-    const newPost = await Post.create({
-      title,
-      content,
-      postType,
-      author,     // must be a valid ObjectId of a user
-      community,  // must be a valid ObjectId of a community
-    });
-
-    res.status(201).json(newPost);
-  } catch (err) {
-    console.error("Error creating post:", err);
-    res.status(500).json({ message: "Server error" });
-  }
 });
 
-//get all posts and put posts created in main page
+// Create a new post
+router.post("/", createPost);
+
 // GET all posts
-router.get("/", async (req: express.Request, res: express.Response) => {
-  try {
-    // Fetch posts and populate author & community
-    const posts = await Post.find()
-    //   .populate("author", "username")         // adjust field names
-    //   .populate("community", "name")
-      .sort({ createdAt: -1 });               // newest first
+router.get("/", getAllPosts);
 
-    res.json(posts);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error fetching posts" });
-  }
-});
+// GET post by ID
+router.get("/:postId", getPostById);
+
+// Update a post
+router.put("/:postId", updatePost);
+
+// Delete a post
+router.delete("/:postId", deletePost);
+
+// Vote on a post
+router.post("/vote", votePost);
 
 export default router;

@@ -4,6 +4,8 @@ export interface IPost extends Document {
     title: string;
     content: string;
     postType: string;
+    imageUrl?: string;
+    linkUrl?: string;
     author: mongoose.Types.ObjectId;
     community: mongoose.Types.ObjectId;
     score: number;
@@ -14,7 +16,7 @@ export interface IPost extends Document {
 const PostSchema: Schema = new Schema(
     {
         title: { type: String, required: true },
-        content: { type: String, required: true },
+        content: { type: String, required: false },
 
         // CHANGED: "Text" -> "text" to match your controller logic
         postType: {
@@ -22,6 +24,9 @@ const PostSchema: Schema = new Schema(
             enum: ["text", "image", "link"],
             default: "text"
         },
+
+        imageUrl: { type: String, required: false },
+        linkUrl: { type: String, required: false },
 
         author: { type: Schema.Types.ObjectId, ref: "User", required: true },
         community: { type: Schema.Types.ObjectId, ref: "Community", required: true },

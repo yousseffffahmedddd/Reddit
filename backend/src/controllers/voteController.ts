@@ -1,6 +1,6 @@
 // filepath: src/controllers/voteController.ts
 import { Request, Response } from "express";
-import Vote from "../models/VoteSchema";
+import mongoose from "mongoose";
 import Post from "../models/PostSchema";
 
 export const voteOnPost = async (req: Request, res: Response) => {
@@ -11,38 +11,43 @@ export const voteOnPost = async (req: Request, res: Response) => {
             return res.status(400).json({ message: "Vote value must be 1 or -1" });
         }
 
-        // 1. Check if user already voted on this post
-        const existingVote = await Vote.findOne({ userId: userId, postId: postId });
-        let scoreChange = 0;
-
-        if (!existingVote) {
-            // SCENARIO A: New Vote
-            const newVote = new Vote({ userId: userId, postId: postId, value });
-            await newVote.save();
-            scoreChange = value;
-        } else if (existingVote.value === value) {
-            // SCENARIO B: Toggle Off (User clicked same button again)
-            await existingVote.deleteOne();
-            scoreChange = -value; // Reverse the score
-        } else {
-            // SCENARIO C: Switch Vote (e.g., Upvote -> Downvote)
-            existingVote.value = value;
-            await existingVote.save();
-            scoreChange = 2 * value; // Jump by 2 (e.g., -1 to +1 is +2)
+        // Validate ObjectIds
+        if (!mongoose.Types.ObjectId.isValid(postId)) {
+            return res.status(400).json({ message: "Invalid post ID" });
+        }
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ message: "Invalid user ID" });
         }
 
-        // 2. Update the Post's total score
-        const updatedPost = await Post.findByIdAndUpdate(
-            postId,
-            { $inc: { score: scoreChange } }, // Atomic increment
-            { new: true }
-        );
+        // Find post
+        const post = await Post.findById(postId);
+        if (!post) return res.status(404).json({ message: "Post not found" });
 
-        res.status(200).json({
-            success: true,
-            score: updatedPost?.score,
-            userVote: existingVote && existingVote.value === value ? 0 : value
-        });
+        // Check if user already voted
+        const existingVoteIndex = post.votes.findIndex((v: any) => v.userId.toString() === userId);
+
+        if (existingVoteIndex !== -1) {
+            // User already voted
+            const existingVote = post.votes[existingVoteIndex];
+
+            if (existingVote.value === value) {
+                // Toggling off (removing vote)
+                post.votes.splice(existingVoteIndex, 1);
+            } else {
+                // Changing vote (e.g., up to down)
+                post.votes[existingVoteIndex].value = value;
+            }
+        } else {
+            // New vote
+            post.votes.push({ userId: new mongoose.Types.ObjectId(userId), value });
+        }
+
+        await post.save();
+
+        // Return the new score
+        const newScore = post.votes.reduce((acc: number, v: any) => acc + v.value, 0);
+
+        res.status(200).json({ success: true, score: newScore });
 
     } catch (error) {
         console.error("Vote Error:", error);

@@ -8,6 +8,7 @@ import {
     deleteComment,
     getCommentCount,
     getUserComments,
+    voteComment,
 } from "../controllers/commentController.ts";
 
 const router = express.Router();
@@ -32,6 +33,9 @@ router.delete("/:commentId", deleteComment);
 
 // Get all comments by a user
 router.get("/user/:userId", getUserComments);
+
+// Vote on a comment
+router.post("/:commentId/vote", voteComment);
 
 export default router;
 

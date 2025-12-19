@@ -1,4 +1,6 @@
 import OpenAI from "openai";
+import dotenv from "dotenv";
+dotenv.config(); // MUST be first
 
 if (!process.env.GITHUB_TOKEN) {
     throw new Error("GITHUB_TOKEN is missing in environment variables");

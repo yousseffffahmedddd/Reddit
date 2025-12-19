@@ -8,6 +8,13 @@ const CommentSchema = new Schema({
 
   parentCommentId: { type: ObjectId, ref: "Comment", default: null }, // Nested comments
 
+  votes: [
+    {
+      userId: { type: ObjectId, ref: "User", required: true },
+      value: { type: Number, required: true }, // 1 for up, -1 for down
+    },
+  ],
+
   createdAt: { type: Date, default: Date.now }
 });
 export default mongoose.model("Comment", CommentSchema);
