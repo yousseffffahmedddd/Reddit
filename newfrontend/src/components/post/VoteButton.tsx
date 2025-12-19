@@ -35,14 +35,14 @@ export function VoteButton({
     vote({ targetId, targetType, value: newValue });
   };
 
-  const iconSize = size === 'sm' ? 'h-5 w-5' : 'h-6 w-6';
+  const iconSize = size === 'sm' ? 'h-4 w-4' : 'h-5 w-5';
   const buttonPadding = size === 'sm' ? 'p-0.5' : 'p-1';
 
   return (
     <div
       className={cn(
-        'flex items-center gap-0.5',
-        orientation === 'vertical' ? 'flex-col' : 'flex-row'
+        'flex items-center',
+        orientation === 'vertical' ? 'flex-col gap-0' : 'flex-row gap-1'
       )}
       data-testid="vote-button"
     >
@@ -50,7 +50,7 @@ export function VoteButton({
         onClick={() => handleVote(1)}
         disabled={isPending}
         className={cn(
-          'vote-button rounded hover:bg-muted',
+          'vote-button rounded hover:bg-hover',
           buttonPadding,
           userVote === 1 ? 'text-upvote' : 'text-muted-foreground hover:text-upvote'
         )}
@@ -61,9 +61,9 @@ export function VoteButton({
 
       <span
         className={cn(
-          'min-w-[2ch] text-center text-xs font-bold',
-          size === 'md' && 'text-sm',
-          scoreColor
+          'min-w-[2ch] text-center text-xs font-bold leading-none',
+          size === 'md' && 'text-xs',
+          userVote === 1 ? 'text-upvote' : userVote === -1 ? 'text-downvote' : 'text-foreground'
         )}
       >
         {formatNumber(score)}
@@ -73,7 +73,7 @@ export function VoteButton({
         onClick={() => handleVote(-1)}
         disabled={isPending}
         className={cn(
-          'vote-button rounded hover:bg-muted',
+          'vote-button rounded hover:bg-hover',
           buttonPadding,
           userVote === -1 ? 'text-downvote' : 'text-muted-foreground hover:text-downvote'
         )}

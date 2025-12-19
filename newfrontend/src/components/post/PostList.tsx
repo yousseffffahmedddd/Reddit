@@ -54,23 +54,23 @@ export function PostList({ communityId, userId, sort = 'hot' }: PostListProps) {
 
   if (posts.length === 0) {
     return (
-      <div className="rounded-md border bg-card p-8 text-center">
-        <p className="text-muted-foreground">No posts yet</p>
+      <div className="rounded border border-border bg-card p-8 text-center">
+        <p className="text-sm text-muted-foreground">No posts yet</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3" data-testid="post-list">
+    <div className="flex flex-col gap-2" data-testid="post-list">
       {posts.map((post) => (
         <PostCard key={post.id} post={post} />
       ))}
 
       {/* Infinite scroll trigger */}
-      <div ref={ref} className="flex justify-center py-4">
+      <div ref={ref} className="flex justify-center py-3">
         {isFetchingNextPage && <Loader size="sm" />}
         {!hasNextPage && posts.length > 0 && (
-          <p className="text-sm text-muted-foreground">No more posts</p>
+          <p className="text-xs text-muted-foreground">No more posts</p>
         )}
       </div>
     </div>

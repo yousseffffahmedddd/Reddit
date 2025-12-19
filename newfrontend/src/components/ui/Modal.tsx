@@ -41,9 +41,9 @@ export function Modal({ isOpen, onClose, title, description, children, className
   if (!mounted || !isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div className="fixed inset-0 bg-black/60" onClick={onClose} aria-hidden="true" />
 
       {/* Modal content */}
       <div
@@ -52,32 +52,30 @@ export function Modal({ isOpen, onClose, title, description, children, className
         aria-labelledby={title ? 'modal-title' : undefined}
         aria-describedby={description ? 'modal-description' : undefined}
         className={cn(
-          'relative z-50 w-full max-w-lg rounded-lg border bg-card p-6 shadow-lg',
-          'animate-in fade-in-0 zoom-in-95 duration-200',
+          'relative z-50 w-full max-w-lg rounded border border-border bg-card p-5 shadow-xl',
+          'animate-in fade-in-0 zoom-in-95 duration-150',
           className
         )}
       >
         {/* Close button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute right-4 top-4 h-8 w-8"
+        <button
+          className="absolute right-3 top-3 rounded p-1 text-muted-foreground hover:bg-hover hover:text-foreground"
           onClick={onClose}
           aria-label="Close"
         >
-          <X className="h-4 w-4" />
-        </Button>
+          <X className="h-5 w-5" />
+        </button>
 
         {/* Header */}
         {(title || description) && (
-          <div className="mb-4">
+          <div className="mb-4 pr-8">
             {title && (
-              <h2 id="modal-title" className="text-lg font-semibold">
+              <h2 id="modal-title" className="text-lg font-medium text-foreground">
                 {title}
               </h2>
             )}
             {description && (
-              <p id="modal-description" className="text-sm text-muted-foreground">
+              <p id="modal-description" className="mt-1 text-sm text-muted-foreground">
                 {description}
               </p>
             )}
@@ -117,14 +115,15 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} description={message}>
-      <div className="flex justify-end gap-2 pt-4">
-        <Button variant="outline" onClick={onClose} disabled={isLoading}>
+      <div className="flex justify-end gap-2 pt-4 border-t border-border mt-4">
+        <Button variant="outline" onClick={onClose} disabled={isLoading} size="sm">
           {cancelText}
         </Button>
         <Button
           variant={variant === 'destructive' ? 'destructive' : 'default'}
           onClick={onConfirm}
           isLoading={isLoading}
+          size="sm"
         >
           {confirmText}
         </Button>

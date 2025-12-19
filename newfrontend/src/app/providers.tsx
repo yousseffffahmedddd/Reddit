@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { QueryProvider, ThemeProvider } from '@/providers';
 // MSW Provider removed - using real backend API
 // import { MSWProvider } from '@/mocks/MSWProvider';
 import { Header, LeftSidebar, RightSidebar, AuthModal } from '@/components/layout';
 import { ErrorBoundary } from '@/components/ui';
+import { cn } from '@/lib/utils';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -17,6 +18,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
     setShowAuthModal(true);
   };
 
+  useEffect(() => {
+    // Open sidebar by default on desktop
+    if (window.innerWidth >= 768) {
+      setSidebarOpen(true);
+    }
+  }, []);
+
   return (
     // MSWProvider removed - using real backend at http://localhost:3000
     <QueryProvider>
@@ -24,9 +32,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <ErrorBoundary>
           <div className="min-h-screen bg-background">
             <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} onAuthClick={openAuthModal} />
-            <div className="mx-auto flex max-w-7xl">
+            <div className="flex min-h-[calc(100vh-48px)]">
               <LeftSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-              <main className="min-h-[calc(100vh-48px)] flex-1 p-4">{children}</main>
+              <div className={cn("flex-1 transition-all duration-300 ease-in-out", sidebarOpen ? "md:ml-[270px]" : "")}>
+                <div className="lg:mr-[312px]">
+                  <div className="mx-auto max-w-[1000px]">
+                    <main className="flex-1 px-4 py-4 lg:px-6">{children}</main>
+                  </div>
+                </div>
+              </div>
               <RightSidebar onAuthClick={openAuthModal} />
             </div>
             <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} initialMode={authMode} />

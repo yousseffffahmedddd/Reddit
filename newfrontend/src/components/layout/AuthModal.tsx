@@ -79,10 +79,10 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
           : 'Create an account to join the community.'
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3">
         {mode === 'register' && (
           <div>
-            <label className="mb-1 block text-sm font-medium">Username</label>
+            <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-foreground">Username</label>
             <Input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -94,7 +94,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
         )}
 
         <div>
-          <label className="mb-1 block text-sm font-medium">Email</label>
+          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-foreground">Email</label>
           <Input
             type="email"
             value={email}
@@ -106,7 +106,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium">Password</label>
+          <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-foreground">Password</label>
           <Input
             type="password"
             value={password}
@@ -141,22 +141,22 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
           text="signin_with"
         />
 
-        <div className="relative flex items-center justify-center">
-          <div className="flex-grow border-t border-gray-300"></div>
-          <span className="flex-shrink mx-4 text-gray-500 text-sm">or</span>
-          <div className="flex-grow border-t border-gray-300"></div>
+        <div className="relative flex items-center justify-center py-1">
+          <div className="flex-grow border-t border-border"></div>
+          <span className="flex-shrink mx-4 text-muted-foreground text-xs uppercase font-bold">or</span>
+          <div className="flex-grow border-t border-border"></div>
         </div>
 
         <Button type="submit" className="w-full" isLoading={isPending}>
           {mode === 'login' ? 'Log In' : 'Sign Up'}
         </Button>
 
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-xs text-muted-foreground pt-2">
           {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
           <button
             type="button"
             onClick={switchMode}
-            className="text-primary hover:underline"
+            className="text-primary font-bold hover:underline"
           >
             {mode === 'login' ? 'Sign Up' : 'Log In'}
           </button>

@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Image, Link2, FileText } from 'lucide-react';
-import { Button, Input, Textarea, Modal } from '@/components/ui';
-import { useCreatePost, useCommunities, useUpdatePost } from '@/hooks';
+import { Image, Link2, FileText, ChevronDown } from 'lucide-react';
+import { Button, Input, Textarea, Modal, Avatar } from '@/components/ui';
+import { useCreatePost, useJoinedCommunities, useUpdatePost } from '@/hooks';
 import type { PostType } from '@/types';
 
 const API_BASE_URL =
@@ -38,6 +38,7 @@ export function CreatePostModal({
     ===================================================== */
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string>('');
+    const [isCommunitySelectorOpen, setIsCommunitySelectorOpen] = useState(false);
 
     const [postType, setPostType] = useState<PostType>(
         initialData?.type || 'text'
@@ -49,7 +50,7 @@ export function CreatePostModal({
         initialData?.communityId || defaultCommunityId || ''
     );
 
-    const { data: communitiesData } = useCommunities();
+    const { data: communitiesData } = useJoinedCommunities();
     const { mutate: createPost, isPending: isCreating, error: createError } =
         useCreatePost();
     const { mutate: updatePost, isPending: isUpdating, error: updateError } =
@@ -59,6 +60,7 @@ export function CreatePostModal({
     const isEditMode = !!initialData?.id;
     const isPending = isCreating || isUpdating;
     const error = createError || updateError;
+    const selectedCommunity = communities.find((c) => c.id === communityId);
 
     /* =====================================================
        🔴 CHANGE #2
@@ -135,34 +137,71 @@ export function CreatePostModal({
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Create Post" className="max-w-2xl">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
 
-                {/* Community */}
-                <select
-                    value={communityId}
-                    onChange={(e) => setCommunityId(e.target.value)}
-                    className="w-full rounded-md border px-3 py-2"
-                    required
-                >
-                    <option value="">Choose a community</option>
-                    {communities.map((c) => (
-                        <option key={c.id} value={c.id}>
-                            r/{c.name}
-                        </option>
-                    ))}
-                </select>
+                <div className="relative">
+                    <button
+                        type="button"
+                        className="w-full rounded border border-border bg-card px-3 py-2 text-sm text-left flex items-center justify-between"
+                        onClick={() => setIsCommunitySelectorOpen(!isCommunitySelectorOpen)}
+                        aria-haspopup="listbox"
+                        aria-expanded={isCommunitySelectorOpen}
+                    >
+                        {selectedCommunity ? (
+                            <div className="flex items-center gap-2">
+                                <Avatar src={selectedCommunity.iconUrl} alt={selectedCommunity.name} size="xs" />
+                                <span>r/{selectedCommunity.name}</span>
+                            </div>
+                        ) : (
+                            <span>Choose a community</span>
+                        )}
+                        <ChevronDown className="h-4 w-4 opacity-50" />
+                    </button>
+                    {isCommunitySelectorOpen && (
+                        <ul
+                            className="absolute z-10 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-auto"
+                            tabIndex={-1}
+                            role="listbox"
+                        >
+                            <li
+                                className="px-3 py-2 hover:bg-muted cursor-pointer flex items-center gap-2"
+                                onClick={() => {
+                                    setCommunityId('');
+                                    setIsCommunitySelectorOpen(false);
+                                }}
+                            >
+                                <span>Choose a community</span>
+                            </li>
+                            {communities.map((c) => (
+                                <li
+                                    key={c.id}
+                                    className="px-3 py-2 hover:bg-muted cursor-pointer flex items-center gap-2"
+                                    onClick={() => {
+                                        setCommunityId(c.id);
+                                        setIsCommunitySelectorOpen(false);
+                                    }}
+                                    role="option"
+                                    aria-selected={communityId === c.id}
+                                >
+                                    <Avatar src={c.iconUrl} alt={c.name} size="xs" />
+                                    <span>r/{c.name}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
 
-                {/* Tabs */}
-                <div className="flex gap-2 border-b">
+                {/* Tabs - Reddit style */}
+                <div className="flex border-b border-border">
                     {postTypes.map(({ type, icon: Icon, label }) => (
                         <button
                             key={type}
                             type="button"
                             onClick={() => setPostType(type)}
-                            className={`flex items-center gap-2 border-b-2 px-4 py-2 ${
+                            className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-sm font-bold transition-colors ${
                                 postType === type
                                     ? 'border-primary text-primary'
-                                    : 'border-transparent'
+                                    : 'border-transparent text-muted-foreground hover:text-foreground'
                             }`}
                         >
                             <Icon className="h-4 w-4" />
@@ -206,14 +245,14 @@ export function CreatePostModal({
                                 setImageFile(file);
                                 setImagePreview(URL.createObjectURL(file));
                             }}
-                            className="w-full rounded-md border px-3 py-2"
+                            className="w-full rounded border border-border bg-card px-3 py-2 text-sm"
                         />
 
                         {imagePreview && (
                             <img
                                 src={imagePreview}
                                 alt="Preview"
-                                className="max-h-64 rounded-md object-contain"
+                                className="max-h-64 rounded object-contain"
                             />
                         )}
                     </div>
@@ -233,11 +272,11 @@ export function CreatePostModal({
                 {error && <p className="text-sm text-destructive">{error.message}</p>}
 
                 {/* Actions */}
-                <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={onClose}>
+                <div className="flex justify-end gap-2 pt-2 border-t border-border">
+                    <Button type="button" variant="outline" onClick={onClose} size="sm">
                         Cancel
                     </Button>
-                    <Button type="submit" isLoading={isPending}>
+                    <Button type="submit" isLoading={isPending} size="sm">
                         Post
                     </Button>
                 </div>

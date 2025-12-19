@@ -54,7 +54,7 @@ export function CommentForm({
 
   if (!isAuthenticated) {
     return (
-      <div className="rounded-md border bg-muted/50 p-4 text-center text-sm text-muted-foreground">
+      <div className="rounded border border-border bg-card p-3 text-center text-sm text-muted-foreground">
         Log in or sign up to leave a comment
       </div>
     );
@@ -68,7 +68,7 @@ export function CommentForm({
         onChange={(e) => setContent(e.target.value)}
         placeholder={placeholder}
         rows={parentId ? 3 : 4}
-        className="resize-none"
+        className="resize-none text-sm"
       />
 
       {error && (

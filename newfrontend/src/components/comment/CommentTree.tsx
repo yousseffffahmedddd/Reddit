@@ -29,12 +29,12 @@ export function CommentTree({ postId }: CommentTreeProps) {
       <CommentForm postId={postId} placeholder="What are your thoughts?" />
 
       {/* Sort selector */}
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Sort by:</span>
+      <div className="flex items-center gap-2 text-xs">
+        <span className="font-bold text-muted-foreground">Sort by:</span>
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as CommentSortType)}
-          className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+          className="rounded border border-border bg-card px-2 py-1 text-xs font-bold text-primary hover:bg-hover focus:outline-none focus:ring-1 focus:ring-border"
         >
           {sortOptions.map((option) => (
             <option key={option.value} value={option.value}>
@@ -59,7 +59,7 @@ export function CommentTree({ postId }: CommentTreeProps) {
       )}
 
       {data && (
-        <div className="space-y-4" data-testid="comment-tree">
+        <div className="space-y-3" data-testid="comment-tree">
           {data.data.length === 0 ? (
             <p className="py-4 text-center text-sm text-muted-foreground">
               No comments yet. Be the first to comment!

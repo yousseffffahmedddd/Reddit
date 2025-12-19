@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   MessageSquare,
@@ -18,11 +19,15 @@ import {
   useUpdatePost,
   useAuthStore,
   useSummarizePost,
+  useJoinCommunity,
+  useJoinedCommunities,
 } from '@/hooks';
 import type { Post } from '@/types';
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { Loader } from '@/components/ui';
+import { Button } from '@/components/ui';
 
 /* =====================================================
    Helper to convert relative image paths returned
@@ -40,6 +45,8 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, isCompact = false }: PostCardProps) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
@@ -49,10 +56,13 @@ export function PostCard({ post, isCompact = false }: PostCardProps) {
   const { mutate: deletePost, isPending: isDeleting } = useDeletePost();
   const { mutate: updatePost, isPending: isUpdating } = useUpdatePost();
   const { mutate: summarizePost, isPending: isSummarizing } = useSummarizePost();
+  const { mutate: joinCommunity, isPending: isJoining } = useJoinCommunity();
+  const { data: joinedCommunitiesData } = useJoinedCommunities();
   const { user, isAuthenticated } = useAuthStore();
 
   const isAuthor = user?.id === post.authorId;
   const postUrl = `/r/${post.community.name}/post/${post.id}`;
+  const isJoined = joinedCommunitiesData?.data.some(c => c.id === post.community.id);
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -95,17 +105,27 @@ export function PostCard({ post, isCompact = false }: PostCardProps) {
     });
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) return;
+    router.push(postUrl);
+  };
+
   return (
     <>
       <article
         className={cn(
-          'post-card group flex rounded-md border bg-card',
-          isCompact ? 'p-2' : 'p-0'
+          'post-card group flex cursor-pointer rounded-xl border border-border bg-card transition-colors hover:border-muted-foreground/30 hover:bg-secondary/5',
+          isCompact ? 'p-2' : ''
         )}
         data-testid="post-card"
+        onClick={handleCardClick}
       >
-        {/* Vote */}
-        <div className="flex w-10 shrink-0 flex-col items-center bg-muted/30 py-2 md:w-12">
+        {/* Vote column - Reddit style */}
+        <div
+          className={cn('flex shrink-0 flex-col items-center py-2', isCompact ? 'w-9' : 'w-10')}
+          onClick={(e) => e.stopPropagation()}
+        >
           <VoteButton
             targetId={post.id}
             targetType="post"
@@ -117,39 +137,57 @@ export function PostCard({ post, isCompact = false }: PostCardProps) {
         </div>
 
         {/* Content */}
-        <div className="flex min-w-0 flex-1 flex-col gap-1 p-2">
-          {/* Meta */}
-          <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5 px-3 py-2">
+          {/* Meta - smaller and muted like Reddit */}
+          <div className="flex flex-wrap items-center gap-1 text-xs">
             <Link
               href={`/r/${post.communityId}`}
-              className="font-medium text-foreground hover:underline"
+              className="font-bold text-foreground hover:underline"
               onClick={(e) => e.stopPropagation()}
             >
               r/{post.community.name}
             </Link>
-            <span>•</span>
-            <span>Posted by</span>
+            <span className="text-muted-foreground">•</span>
+            <span className="text-muted-foreground">Posted by</span>
             <Link
               href={`/u/${post.author.username}`}
-              className="hover:underline"
+              className="text-muted-foreground hover:underline"
               onClick={(e) => e.stopPropagation()}
             >
               u/{post.author.username}
             </Link>
-            <span>{formatTimeAgo(post.createdAt)}</span>
+            <span className="text-muted-foreground">{formatTimeAgo(post.createdAt)}</span>
+            {isAuthenticated && !isJoined && (
+              <div className="ml-auto flex items-center" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                <span className="text-muted-foreground mx-1">•</span>
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  className="bg-downvote text-primary-foreground hover:bg-downvote hover:brightness-90"
+                  onClick={() => joinCommunity(post.community.id)}
+                  disabled={isJoining}
+                >
+                  {isJoining ? 'Joining...' : 'Join'}
+                </Button>
+              </div>
+            )}
           </div>
 
-          {/* Title */}
-          <Link href={postUrl} className="group/title">
+          {/* Title - Reddit weight and size */}
+          <Link
+            href={postUrl}
+            className="group/title"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h2
               className={cn(
-                'font-medium leading-snug group-hover/title:text-primary',
-                isCompact ? 'text-sm' : 'text-lg'
+                'font-semibold leading-snug text-foreground group-hover/title:text-foreground',
+                isCompact ? 'text-sm' : 'text-base'
               )}
             >
               {post.title}
               {post.type === 'link' && post.linkUrl && (
-                <span className="ml-2 inline-flex items-center gap-1 text-xs font-normal text-muted-foreground">
+                <span className="ml-1.5 inline-flex items-center gap-0.5 text-xs font-normal text-primary">
                   ({getDomainFromUrl(post.linkUrl)})
                   <ExternalLink className="h-3 w-3" />
                 </span>
@@ -159,7 +197,7 @@ export function PostCard({ post, isCompact = false }: PostCardProps) {
 
           {/* Text preview (hidden for image posts) */}
           {!isCompact && post.content && post.type !== 'image' && (
-            <p className="text-sm text-muted-foreground line-clamp-3">
+            <p className="mt-1 text-sm text-foreground/80 line-clamp-3">
               {truncateText(post.content, 300)}
             </p>
           )}
@@ -169,11 +207,12 @@ export function PostCard({ post, isCompact = false }: PostCardProps) {
             <Link
               href={getFullImageUrl(post.imageUrl)}
               className="mt-2 block"
+              onClick={(e) => e.stopPropagation()}
             >
               <img
                 src={getFullImageUrl(post.imageUrl)}
                 alt={post.title}
-                className="max-h-[512px] w-auto rounded-md object-contain"
+                className="max-h-[512px] w-auto rounded object-contain"
               />
             </Link>
           )}
@@ -184,19 +223,20 @@ export function PostCard({ post, isCompact = false }: PostCardProps) {
               href={post.linkUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 flex items-center gap-2 rounded-md border bg-muted/50 p-3 text-sm hover:bg-muted"
+              className="mt-2 flex items-center gap-2 rounded border border-border bg-secondary/30 p-2 text-sm hover:bg-hover"
               onClick={(e) => e.stopPropagation()}
             >
-              <ExternalLink className="h-4 w-4 shrink-0" />
-              <span className="text-muted-foreground">Open link</span>
+              <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="truncate text-primary">{post.linkUrl}</span>
             </a>
           )}
 
-          {/* Actions */}
-          <div className="mt-1 flex items-center gap-1">
+          {/* Actions - Reddit style with rounded hover */}
+          <div className="mt-1.5 flex items-center gap-1">
             <Link
               href={postUrl}
-              className="flex items-center gap-1 rounded-sm px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted"
+              className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold text-muted-foreground hover:bg-hover"
+              onClick={(e) => e.stopPropagation()}
             >
               <MessageSquare className="h-4 w-4" />
               <span>{post.commentCount} Comments</span>
@@ -205,7 +245,7 @@ export function PostCard({ post, isCompact = false }: PostCardProps) {
             <button
               onClick={handleShare}
               className={cn(
-                'flex items-center gap-1 rounded-sm px-2 py-1 text-xs font-medium hover:bg-muted',
+                'flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold hover:bg-hover',
                 showCopiedMessage ? 'text-green-600' : 'text-muted-foreground'
               )}
             >
@@ -220,7 +260,7 @@ export function PostCard({ post, isCompact = false }: PostCardProps) {
                 onClick={handleSummarize}
                 disabled={isSummarizing}
                 className={cn(
-                  'flex items-center gap-1 rounded-sm px-2 py-1 text-xs font-medium hover:bg-muted',
+                  'flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold hover:bg-hover',
                   showSummary ? 'text-primary' : 'text-muted-foreground'
                 )}
               >
@@ -236,20 +276,26 @@ export function PostCard({ post, isCompact = false }: PostCardProps) {
             {isAuthor && (
               <div className="relative ml-auto">
                 <button
-                  onClick={() => setShowMenu(!showMenu)}
-                  className="rounded-sm p-1 text-muted-foreground hover:bg-muted"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMenu(!showMenu);
+                  }}
+                  className="rounded-full p-1.5 text-muted-foreground hover:bg-hover"
                   disabled={isUpdating}
                 >
                   {isUpdating ? <Loader size="sm" /> : <MoreHorizontal className="h-4 w-4" />}
                 </button>
                 {showMenu && (
-                  <div className="absolute right-0 top-full z-10 mt-1 w-32 rounded-md border bg-card shadow-md">
+                  <div
+                    className="absolute right-0 top-full z-10 mt-1 w-36 rounded border border-border bg-card py-1 shadow-lg"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Link
                       href={`${postUrl}/edit`}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-hover"
                       onClick={() => setShowMenu(false)}
                     >
-                      <Edit2 className="h-4 w-4" />
+                      <Edit2 className="h-4 w-4 text-muted-foreground" />
                       Edit
                     </Link>
                     <button
@@ -257,7 +303,7 @@ export function PostCard({ post, isCompact = false }: PostCardProps) {
                         setShowMenu(false);
                         setShowDeleteDialog(true);
                       }}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-hover"
                       disabled={isDeleting}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -271,15 +317,15 @@ export function PostCard({ post, isCompact = false }: PostCardProps) {
 
           {/* AI Summary display */}
           {showSummary && summary && (
-            <div className="mt-2 rounded-md border border-primary/20 bg-primary/5 p-3">
+            <div className="mt-2 rounded border border-primary/20 bg-primary/5 p-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-medium text-primary">
+                <div className="flex items-center gap-2 text-xs font-bold text-primary">
                   <Sparkles className="h-4 w-4" />
                   AI Summary
                 </div>
                 <button
                   onClick={() => setShowSummary(false)}
-                  className="rounded p-1 hover:bg-muted"
+                  className="rounded p-1 hover:bg-hover"
                 >
                   <X className="h-3 w-3" />
                 </button>

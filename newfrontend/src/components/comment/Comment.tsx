@@ -39,7 +39,7 @@ export function Comment({ comment, postId, depth = 0, maxDepth = 6 }: CommentPro
   return (
     <>
       <div
-        className={cn('relative', depth > 0 && 'ml-4 border-l-2 border-border pl-4')}
+        className={cn('relative', depth > 0 && 'ml-3 border-l-2 border-border pl-3 hover:border-primary/40')}
         data-testid="comment"
       >
         {/* Collapse line */}
@@ -52,11 +52,11 @@ export function Comment({ comment, postId, depth = 0, maxDepth = 6 }: CommentPro
         )}
 
         {/* Comment header */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Avatar src={comment.author.avatarUrl} alt={comment.author.username} size="xs" />
           <Link
             href={`/u/${comment.author.username}`}
-            className="text-xs font-medium hover:underline"
+            className="text-xs font-bold text-foreground hover:underline"
           >
             {comment.author.username}
           </Link>
@@ -65,13 +65,13 @@ export function Comment({ comment, postId, depth = 0, maxDepth = 6 }: CommentPro
           </span>
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="ml-auto text-muted-foreground hover:text-foreground"
+            className="ml-auto rounded p-0.5 text-muted-foreground hover:bg-hover"
             aria-label={isCollapsed ? 'Expand' : 'Collapse'}
           >
             {isCollapsed ? (
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-3.5 w-3.5" />
             ) : (
-              <ChevronUp className="h-4 w-4" />
+              <ChevronUp className="h-3.5 w-3.5" />
             )}
           </button>
         </div>
@@ -79,10 +79,10 @@ export function Comment({ comment, postId, depth = 0, maxDepth = 6 }: CommentPro
         {/* Comment content (collapsible) */}
         {!isCollapsed && (
           <>
-            <div className="mt-1 text-sm">{comment.content}</div>
+            <div className="mt-1.5 text-sm text-foreground leading-relaxed">{comment.content}</div>
 
             {/* Actions */}
-            <div className="mt-1 flex items-center gap-2">
+            <div className="mt-1.5 flex items-center gap-0.5">
               <VoteButton
                 targetId={comment.id}
                 targetType="comment"
@@ -95,9 +95,9 @@ export function Comment({ comment, postId, depth = 0, maxDepth = 6 }: CommentPro
 
               <button
                 onClick={() => setShowReplyForm(!showReplyForm)}
-                className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-muted-foreground hover:bg-muted"
+                className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold text-muted-foreground hover:bg-hover"
               >
-                <MessageSquare className="h-3 w-3" />
+                <MessageSquare className="h-3.5 w-3.5" />
                 Reply
               </button>
 
@@ -105,18 +105,18 @@ export function Comment({ comment, postId, depth = 0, maxDepth = 6 }: CommentPro
                 <div className="relative">
                   <button
                     onClick={() => setShowMenu(!showMenu)}
-                    className="rounded p-1 text-muted-foreground hover:bg-muted"
+                    className="rounded-full p-1.5 text-muted-foreground hover:bg-hover"
                   >
-                    <MoreHorizontal className="h-4 w-4" />
+                    <MoreHorizontal className="h-3.5 w-3.5" />
                   </button>
                   {showMenu && (
-                    <div className="absolute left-0 top-full z-10 mt-1 w-32 rounded-md border bg-card shadow-md">
+                    <div className="absolute left-0 top-full z-10 mt-1 w-32 rounded border border-border bg-card py-1 shadow-lg">
                       <button
                         onClick={() => {
                           setShowMenu(false);
                           setShowDeleteDialog(true);
                         }}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted"
+                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-hover"
                       >
                         <Trash2 className="h-4 w-4" />
                         Delete
@@ -142,7 +142,7 @@ export function Comment({ comment, postId, depth = 0, maxDepth = 6 }: CommentPro
 
             {/* Nested replies */}
             {hasReplies && !isDeepThread && (
-              <div className="mt-2 space-y-2">
+              <div className="mt-3 space-y-3">
                 {comment.replies.map((reply) => (
                   <Comment
                     key={reply.id}

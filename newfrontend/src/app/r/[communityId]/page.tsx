@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Flame, Clock, TrendingUp, Users, Calendar, Settings, Camera } from 'lucide-react';
 import { cn, formatNumber, formatDate } from '@/lib/utils';
 import { Avatar, Loader, ErrorMessage, Button, Modal, Input, Textarea } from '@/components/ui';
-import { PostList } from '@/components/post';
+import { PostList, CreatePostModal } from '@/components/post';
 import { useCommunity, useAuthStore, useJoinCommunity, useOwnedCommunities, useUpdateCommunity, useUploadCommunityIcon } from '@/hooks';
 import type { Community, PostSortType } from '@/types';
 
@@ -21,6 +21,7 @@ export default function CommunityPage() {
   const communityId = params.communityId as string;
   const [sort, setSort] = useState<PostSortType>('hot');
   const [showEditModal, setShowEditModal] = useState(false);
+  const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
   const [editDescription, setEditDescription] = useState('');
   const [iconPreview, setIconPreview] = useState<string | null>(null);
   const [selectedIconFile, setSelectedIconFile] = useState<File | null>(null);
@@ -124,31 +125,31 @@ export default function CommunityPage() {
           When backend supports it, add ImageUpload component here for admins */}
       {community.bannerUrl ? (
         <div
-          className="-mx-4 -mt-4 h-32 bg-cover bg-center md:h-48"
+          className="-mx-4 -mt-4 h-20 bg-cover bg-center md:h-32 lg:-mx-6"
           style={{ backgroundImage: `url(${community.bannerUrl})` }}
         />
       ) : (
-        <div className="-mx-4 -mt-4 h-24 bg-gradient-to-r from-primary to-orange-400" />
+        <div className="-mx-4 -mt-4 h-16 bg-gradient-to-r from-primary to-orange-400 lg:-mx-6" />
       )}
 
       {/* Community header */}
-      <div className="-mt-4 mb-4 rounded-md border bg-card p-4">
-        <div className="flex items-start gap-4">
+      <div className="-mt-3 mb-4 rounded border border-border bg-card px-4 py-3">
+        <div className="flex items-start gap-3">
           {/* TODO: Community icon upload not implemented in backend
               When backend supports it, add ImageUpload component here for admins */}
-          <Avatar src={community.iconUrl} alt={community.name} size="xl" className="-mt-10 border-4 border-card" />
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">{community.displayName}</h1>
+          <Avatar src={community.iconUrl} alt={community.name} size="xl" className="-mt-8 border-4 border-card" />
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl font-bold text-foreground truncate">{community.displayName}</h1>
             <p className="text-sm text-muted-foreground">r/{community.name}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 shrink-0">
             {isOwner && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleOpenEditModal}
               >
-                <Settings className="mr-2 h-4 w-4" />
+                <Settings className="mr-1.5 h-4 w-4" />
                 Manage
               </Button>
             )}
@@ -156,7 +157,8 @@ export default function CommunityPage() {
               <Button
                 onClick={handleJoin}
                 disabled={isJoining}
-                variant={community.isJoined ? "secondary" : "default"}
+                variant={community.isJoined ? "outline" : "default"}
+                size="sm"
               >
                 {isJoining ? 'Joining...' : community.isJoined ? 'Joined' : 'Join'}
               </Button>
@@ -164,36 +166,50 @@ export default function CommunityPage() {
           </div>
         </div>
 
-        <p className="mt-4 text-sm">{community.description}</p>
+        {community.description && (
+          <p className="mt-3 text-sm text-foreground">{community.description}</p>
+        )}
 
-        <div className="mt-4 flex gap-6 text-sm">
-          <div className="flex items-center gap-2">
+        <div className="mt-3 flex flex-wrap gap-4 text-sm">
+          <div className="flex items-center gap-1.5">
             <Users className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">{formatNumber(community.memberCount)}</span>
+            <span className="font-medium text-foreground">{formatNumber(community.memberCount)}</span>
             <span className="text-muted-foreground">Members</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">Created {formatDate(community.createdAt)}</span>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto max-w-2xl">
-        {/* Sort tabs */}
-        <div className="mb-4 flex items-center gap-2 rounded-md border bg-card p-2">
+      <div className="mx-auto max-w-[640px]">
+        {/* Create Post Bar */}
+        {isAuthenticated && (
+          <div className="mb-3 flex items-center gap-2 rounded border border-border bg-card p-2">
+            <Avatar src={user?.profilePicture || null} alt={user?.username || 'User'} size="sm" />
+            <Input
+              placeholder="Create Post"
+              onClick={() => setIsCreatePostModalOpen(true)}
+              readOnly
+              className="cursor-pointer hover:border-primary"
+            />
+          </div>
+        )}
+        {/* Sort tabs - Reddit style */}
+        <div className="mb-3 flex items-center gap-1.5 rounded border border-border bg-card px-2 py-2">
           {sortOptions.map(({ value, label, icon: Icon }) => (
             <button
               key={value}
               onClick={() => setSort(value)}
               className={cn(
-                'flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
+                'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold transition-colors',
                 sort === value
-                  ? 'bg-muted text-foreground'
-                  : 'text-muted-foreground hover:bg-muted/50'
+                  ? 'bg-secondary text-foreground'
+                  : 'text-muted-foreground hover:bg-hover'
               )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className={cn('h-5 w-5', sort === value && 'text-primary')} />
               {label}
             </button>
           ))}
@@ -202,6 +218,13 @@ export default function CommunityPage() {
         {/* Posts */}
         <PostList communityId={communityId} sort={sort} />
       </div>
+
+      {/* Create Post Modal */}
+      <CreatePostModal
+        isOpen={isCreatePostModalOpen}
+        onClose={() => setIsCreatePostModalOpen(false)}
+        defaultCommunityId={community.id}
+      />
 
       {/* Edit Community Modal */}
       <Modal

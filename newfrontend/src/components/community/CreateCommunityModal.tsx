@@ -114,10 +114,10 @@ export function CreateCommunityModal({ isOpen, onClose }: CreateCommunityModalPr
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Create a Community">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3">
         {/* Community Icon */}
         <div>
-          <label className="mb-2 block text-sm font-medium">
+          <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-foreground">
             Community Icon (optional)
           </label>
           <div className="flex items-center gap-4">
@@ -167,11 +167,11 @@ export function CreateCommunityModal({ isOpen, onClose }: CreateCommunityModalPr
         </div>
 
         <div>
-          <label htmlFor="community-name" className="mb-1 block text-sm font-medium">
+          <label htmlFor="community-name" className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-foreground">
             Name
           </label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
               r/
             </span>
             <Input
@@ -189,7 +189,7 @@ export function CreateCommunityModal({ isOpen, onClose }: CreateCommunityModalPr
         </div>
 
         <div>
-          <label htmlFor="community-description" className="mb-1 block text-sm font-medium">
+          <label htmlFor="community-description" className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-foreground">
             Description (optional)
           </label>
           <Textarea
@@ -202,16 +202,16 @@ export function CreateCommunityModal({ isOpen, onClose }: CreateCommunityModalPr
         </div>
 
         {error && (
-          <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+          <div className="rounded border border-destructive/20 bg-destructive/10 p-2.5 text-sm text-destructive">
             {error}
           </div>
         )}
 
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={handleClose}>
+        <div className="flex justify-end gap-2 pt-2 border-t border-border">
+          <Button type="button" variant="outline" onClick={handleClose} size="sm">
             Cancel
           </Button>
-          <Button type="submit" disabled={isLoading || !name.trim()}>
+          <Button type="submit" disabled={isLoading || !name.trim()} size="sm">
             {isLoading ? 'Creating...' : 'Create Community'}
           </Button>
         </div>
