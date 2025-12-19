@@ -1,0 +1,105 @@
+# Docker Compose for Production Deployment
+# Run: docker-compose -f docker-compose.prod.yml up -d
+
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: reddit-backend
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - MONGO_URI=${MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - backend-uploads:/app/uploads
+    depends_on:
+      - mongo
+    restart: always
+    networks:
+      - reddit-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Frontend Next.js
+  frontend:
+    build:
+      context: ./newfrontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${BACKEND_URL:-http://backend:3000}
+        - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+    container_name: reddit-frontend
+    expose:
+      - "3001"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    restart: always
+    networks:
+      - reddit-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # MongoDB Database
+  mongo:
+    image: mongo:7
+    container_name: reddit-mongo
+    expose:
+      - "27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: always
+    networks:
+      - reddit-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: reddit-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    restart: always
+    networks:
+      - reddit-network
+
+# Volumes
+volumes:
+  mongo-data:
+    driver: local
+  backend-uploads:
+    driver: local
+
+# Network
+networks:
+  reddit-network:
+    driver: bridge
+

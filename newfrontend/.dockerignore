@@ -1,0 +1,26 @@
+# Frontend .dockerignore
+node_modules
+npm-debug.log
+.next
+.env
+.env.*
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+.dockerignore
+README.md
+*.md
+.vscode
+.idea
+coverage
+.nyc_output
+*.log
+e2e
+playwright-report
+test-results
+.playwright
+jest.config.js
+jest.setup.ts
+playwright.config.ts
+
