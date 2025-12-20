@@ -11,7 +11,10 @@ import type { PostSortType } from '@/types';
 const sortOptions: { value: PostSortType; label: string; icon: typeof Flame }[] = [
   { value: 'hot', label: 'Hot', icon: Flame },
   { value: 'new', label: 'New', icon: Clock },
+<<<<<<< HEAD
   // { value: 'popular', label: 'Popular', icon: TrendingUp },
+=======
+>>>>>>> 3a31671bd782995c9cc15272a7623098287b62ad
   { value: 'top', label: 'Top', icon: Award },
 ];
 
@@ -22,43 +25,23 @@ export default function HomePage() {
 
   return (
     <div className="mx-auto max-w-[640px]">
-      {/* Create Post Bar */}
-      {/* {isAuthenticated && (
-        <div className="mb-4 flex items-center gap-2 rounded border border-border bg-card p-2">
-          <Avatar src={user?.avatarUrl} alt={user?.username} size="sm" />
-          <input
-            type="text"
-            placeholder="Create Post"
-            className="flex-1 rounded border border-border bg-secondary px-4 py-2 text-sm text-muted-foreground hover:bg-secondary/80 focus:outline-none"
-            onClick={() => setShowCreatePost(true)}
-            readOnly
-          />
-          <button onClick={() => setShowCreatePost(true)} className="rounded p-2 hover:bg-hover">
-            <Image className="h-5 w-5 text-muted-foreground" />
-          </button>
-          <button onClick={() => setShowCreatePost(true)} className="rounded p-2 hover:bg-hover">
-            <Link2 className="h-5 w-5 text-muted-foreground" />
-          </button>
-        </div>
-      )} */}
-
-      {/* Sort tabs - Reddit pill style */}
-      <div className="mb-3 flex items-center gap-1.5 rounded border border-border bg-card px-2 py-2">
-        {sortOptions.map(({ value, label, icon: Icon }) => (
-          <button
-            key={value}
-            onClick={() => setSort(value)}
-            className={cn(
-              'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold transition-colors',
-              sort === value
-                ? 'bg-secondary text-foreground'
-                : 'text-muted-foreground hover:bg-hover'
-            )}
-          >
-            <Icon className={cn('h-5 w-5', sort === value && 'text-primary')} />
-            {label}
-          </button>
-        ))}
+      {/* Sort dropdown - top left */}
+      <div className="mb-3 flex items-center gap-2">
+        <label htmlFor="sort-select" className="text-sm font-bold text-muted-foreground">
+          Sort by:
+        </label>
+        <select
+          id="sort-select"
+          value={sort}
+          onChange={(e) => setSort(e.target.value as PostSortType)}
+          className="rounded border border-border bg-card px-3 py-1.5 text-sm font-bold text-foreground hover:bg-hover focus:outline-none focus:ring-1 focus:ring-border"
+        >
+          {sortOptions.map(({ value, label }) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Post feed */}
