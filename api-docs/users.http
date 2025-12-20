@@ -1,0 +1,155 @@
+###############################################################################
+#                          USERS API
+#                         /api/users
+###############################################################################
+
+# Dynamic Variables - edit these or they will be set from responses
+@baseUrl = http://localhost:3000
+@userId = YOUR_USER_ID
+@postId = YOUR_POST_ID
+@username = testuser
+
+### ==========================================================================
+### Get user profile by username
+### Returns public profile information
+### ==========================================================================
+# @name getUserProfile
+GET {{baseUrl}}/api/users/profile/{{username}}
+
+> {%
+    client.test("Profile retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+    if (response.body._id) {
+        client.log("User ID: " + response.body._id);
+        client.log("Username: " + response.body.username);
+    }
+%}
+
+### ==========================================================================
+### Update user profile
+### Update bio and display name
+### ==========================================================================
+# @name updateProfile
+PUT {{baseUrl}}/api/users/profile
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "bio": "Hello! I'm a Reddit clone user. I love discussing technology and science.",
+  "displayName": "Cool User"
+}
+
+> {%
+    client.test("Profile updated", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Update only bio
+### ==========================================================================
+# @name updateBio
+PUT {{baseUrl}}/api/users/profile
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "bio": "Just updated my bio!"
+}
+
+### ==========================================================================
+### Update only display name
+### ==========================================================================
+# @name updateDisplayName
+PUT {{baseUrl}}/api/users/profile
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "displayName": "New Display Name"
+}
+
+### ==========================================================================
+### Upload profile picture
+### Supported formats: JPEG, PNG, GIF, WebP
+### Max file size depends on server configuration
+### ==========================================================================
+# @name uploadProfilePicture
+POST {{baseUrl}}/api/users/profile/picture
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="userId"
+
+{{userId}}
+------WebKitFormBoundary
+Content-Disposition: form-data; name="profilePicture"; filename="avatar.jpg"
+Content-Type: image/jpeg
+
+< ./test-images/avatar.jpg
+------WebKitFormBoundary--
+
+> {%
+    client.test("Picture uploaded", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+    if (response.body.profilePicture) {
+        client.log("Profile Picture URL: " + response.body.profilePicture);
+    }
+%}
+
+### ==========================================================================
+### Delete profile picture
+### Removes the current profile picture
+### ==========================================================================
+# @name deleteProfilePicture
+DELETE {{baseUrl}}/api/users/profile/picture
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}"
+}
+
+> {%
+    client.test("Picture deleted", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Save/Unsave a post (toggle)
+### If post is not saved, it will be saved
+### If post is already saved, it will be unsaved
+### ==========================================================================
+# @name toggleSavePost
+POST {{baseUrl}}/api/users/save-post
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "postId": "{{postId}}"
+}
+
+> {%
+    client.test("Save toggled", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+    client.log("Is Saved: " + response.body.isSaved);
+%}
+
+### ==========================================================================
+### Get user's saved posts
+### Returns array of saved post IDs
+### ==========================================================================
+# @name getSavedPosts
+GET {{baseUrl}}/api/users/saved-posts/{{userId}}
+
+> {%
+    client.test("Saved posts retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+    if (response.body.savedPosts) {
+        client.log("Number of saved posts: " + response.body.savedPosts.length);
+    }
+%}

@@ -1,0 +1,209 @@
+###############################################################################
+#                         POSTS API
+#                       /apis/Postapi
+###############################################################################
+
+# Dynamic Variables - edit these or they will be set from responses
+@baseUrl = http://localhost:3000
+@userId = YOUR_USER_ID
+@postId = YOUR_POST_ID
+@communityId = YOUR_COMMUNITY_ID
+@uploadedImageUrl = YOUR_UPLOADED_IMAGE_URL
+
+### ==========================================================================
+### Get all posts
+### Returns all posts with author and community info populated
+### ==========================================================================
+# @name getAllPosts
+GET {{baseUrl}}/apis/Postapi
+
+> {%
+    client.test("Posts retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(Array.isArray(response.body), "Response should be an array");
+    });
+%}
+
+### ==========================================================================
+### Get all posts with user vote status
+### Pass userId to get the current user's vote on each post
+### ==========================================================================
+# @name getAllPostsWithVotes
+GET {{baseUrl}}/apis/Postapi?userId={{userId}}
+
+> {%
+    client.test("Posts with votes retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Get single post by ID
+### ==========================================================================
+# @name getPostById
+GET {{baseUrl}}/apis/Postapi/{{postId}}
+
+> {%
+    client.test("Post retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Create a TEXT post
+### ==========================================================================
+# @name createTextPost
+POST {{baseUrl}}/apis/Postapi
+Content-Type: application/json
+
+{
+  "title": "My Text Post",
+  "content": "This is the content of my text post. It can contain multiple paragraphs and detailed information about the topic.",
+  "postType": "text",
+  "author": "{{userId}}",
+  "community": "{{communityId}}"
+}
+
+> {%
+    client.test("Text post created", function() {
+        client.assert(response.status === 201, "Response status is not 201");
+    });
+    if (response.body._id) {
+        client.global.set("postId", response.body._id);
+        client.log("Post ID saved: " + response.body._id);
+    }
+%}
+
+### ==========================================================================
+### Create a LINK post
+### ==========================================================================
+# @name createLinkPost
+POST {{baseUrl}}/apis/Postapi
+Content-Type: application/json
+
+{
+  "title": "Check out this interesting article",
+  "content": "",
+  "postType": "link",
+  "linkUrl": "https://example.com/interesting-article",
+  "author": "{{userId}}",
+  "community": "{{communityId}}"
+}
+
+> {%
+    client.test("Link post created", function() {
+        client.assert(response.status === 201, "Response status is not 201");
+    });
+    if (response.body._id) {
+        client.global.set("postId", response.body._id);
+    }
+%}
+
+### ==========================================================================
+### Upload an image for a post
+### Returns the imageUrl to use when creating the post
+### ==========================================================================
+# @name uploadPostImage
+POST {{baseUrl}}/apis/Postapi/upload
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="image"; filename="test-image.jpg"
+Content-Type: image/jpeg
+
+< ./test-images/test-image.jpg
+------WebKitFormBoundary--
+
+> {%
+    client.test("Image uploaded", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+    if (response.body.imageUrl) {
+        client.global.set("uploadedImageUrl", response.body.imageUrl);
+        client.log("Image URL: " + response.body.imageUrl);
+    }
+%}
+
+### ==========================================================================
+### Create an IMAGE post
+### First upload an image using the upload endpoint, then use the returned URL
+### ==========================================================================
+# @name createImagePost
+POST {{baseUrl}}/apis/Postapi
+Content-Type: application/json
+
+{
+  "title": "Check out this amazing photo!",
+  "content": "Description of the image",
+  "postType": "image",
+  "imageUrl": "{{uploadedImageUrl}}",
+  "author": "{{userId}}",
+  "community": "{{communityId}}"
+}
+
+> {%
+    client.test("Image post created", function() {
+        client.assert(response.status === 201, "Response status is not 201");
+    });
+    if (response.body._id) {
+        client.global.set("postId", response.body._id);
+    }
+%}
+
+### ==========================================================================
+### Update a post
+### Only the author can update their post
+### ==========================================================================
+# @name updatePost
+PUT {{baseUrl}}/apis/Postapi/{{postId}}
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "title": "Updated Post Title",
+  "content": "This is the updated content of the post."
+}
+
+> {%
+    client.test("Post updated", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Delete a post
+### Only the author can delete their post
+### ==========================================================================
+# @name deletePost
+DELETE {{baseUrl}}/apis/Postapi/{{postId}}
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}"
+}
+
+> {%
+    client.test("Post deleted", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Vote on a post (Legacy endpoint on posts route)
+### value: 1 (upvote), -1 (downvote)
+### ==========================================================================
+# @name voteOnPostLegacy
+POST {{baseUrl}}/apis/Postapi/vote
+Content-Type: application/json
+
+{
+  "postId": "{{postId}}",
+  "userId": "{{userId}}",
+  "value": 1
+}
+
+> {%
+    client.test("Vote recorded", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}

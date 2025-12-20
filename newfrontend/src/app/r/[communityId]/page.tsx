@@ -187,7 +187,7 @@ export default function CommunityPage() {
         {/* Create Post Bar */}
         {isAuthenticated && (
           <div className="mb-3 flex items-center gap-2 rounded border border-border bg-card p-2">
-            <Avatar src={user?.profilePicture || null} alt={user?.username || 'User'} size="sm" />
+            <Avatar src={user?.avatarUrl || null} alt={user?.username || 'User'} size="sm" />
             <Input
               placeholder="Create Post"
               onClick={() => setIsCreatePostModalOpen(true)}

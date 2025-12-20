@@ -1,0 +1,81 @@
+###############################################################################
+#                     AUTHENTICATION API
+#                     /api/auth
+###############################################################################
+
+# Dynamic Variables
+@baseUrl = http://localhost:3000
+# Generate a random integer for this run to ensure uniqueness
+@randomNumber = {{ $random.integer(1000, 9999) }}
+@username = newuser{{randomNumber}}
+@email = {{username}}@example.com
+@password = password123
+
+### ==========================================================================
+### Register a new user
+### ==========================================================================
+# @name signup
+POST {{baseUrl}}/api/auth/signup
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+> {%
+    client.test("User registered successfully", function() {
+        client.assert(response.status === 201, "Response status is not 201");
+    });
+    // Save the User ID globally for the Logout step
+    if (response.body.user && response.body.user._id) {
+        client.global.set("userId", response.body.user._id);
+        client.log("User ID saved: " + response.body.user._id);
+    }
+%}
+
+### ==========================================================================
+### Login with email and password
+### ==========================================================================
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+> {%
+    client.test("Login successful", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+    // Redundant but safe: ensure userId is set if signup script didn't run
+    if (response.body.user && response.body.user._id) {
+        client.global.set("userId", response.body.user._id);
+    }
+%}
+
+### ==========================================================================
+### Google OAuth Login
+### Use the credential token from Google Sign-In
+### ==========================================================================
+
+
+### ==========================================================================
+### Logout
+### ==========================================================================
+# @name logout
+POST {{baseUrl}}/api/auth/logout
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}"
+}
+
+> {%
+    client.test("Logout successful", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}

@@ -1,0 +1,166 @@
+###############################################################################
+#                       COMMUNITIES API
+#                     /apis/Communityapi
+###############################################################################
+
+# Dynamic Variables - edit these or they will be set from responses
+@baseUrl = http://localhost:3000
+@userId = YOUR_USER_ID
+@communityId = YOUR_COMMUNITY_ID
+
+### ==========================================================================
+### Get all communities
+### ==========================================================================
+# @name getAllCommunities
+GET {{baseUrl}}/apis/Communityapi
+
+> {%
+    client.test("Communities retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(Array.isArray(response.body), "Response should be an array");
+    });
+%}
+
+### ==========================================================================
+### Search communities by name
+### ==========================================================================
+# @name searchCommunities
+GET {{baseUrl}}/apis/Communityapi/search?q=Tech
+
+> {%
+    client.test("Search completed", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Get community by ID or name
+### Can use either the MongoDB _id or the community name
+### ==========================================================================
+# @name getCommunityById
+GET {{baseUrl}}/apis/Communityapi/{{communityId}}
+
+> {%
+    client.test("Community retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Get community by name (alternative)
+### ==========================================================================
+# @name getCommunityByName
+GET {{baseUrl}}/apis/Communityapi/testcommunity
+
+### ==========================================================================
+### Get communities joined by a user
+### ==========================================================================
+# @name getJoinedCommunities
+GET {{baseUrl}}/apis/Communityapi/user/{{userId}}
+
+> {%
+    client.test("Joined communities retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Get communities owned/administered by a user
+### Returns communities where the user has admin role
+### ==========================================================================
+# @name getOwnedCommunities
+GET {{baseUrl}}/apis/Communityapi/owned/{{userId}}
+
+> {%
+    client.test("Owned communities retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Create a new community
+### The creating user automatically becomes admin
+### ==========================================================================
+# @name createCommunity
+POST {{baseUrl}}/apis/Communityapi
+Content-Type: application/json
+
+{
+  "name": "mycommunity",
+  "description": "This is a community about interesting topics and discussions.",
+  "userId": "{{userId}}"
+}
+
+> {%
+    client.test("Community created", function() {
+        client.assert(response.status === 201, "Response status is not 201");
+    });
+    if (response.body._id) {
+        client.global.set("communityId", response.body._id);
+        client.log("Community ID saved: " + response.body._id);
+    }
+%}
+
+### ==========================================================================
+### Join a community
+### Adds the user to the community's members list
+### ==========================================================================
+# @name joinCommunity
+POST {{baseUrl}}/apis/Communityapi/join
+Content-Type: application/json
+
+{
+  "communityId": "{{communityId}}",
+  "userId": "{{userId}}"
+}
+
+> {%
+    client.test("Joined community", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Update community description (Admin only)
+### ==========================================================================
+# @name updateCommunity
+PUT {{baseUrl}}/apis/Communityapi/{{communityId}}
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "description": "This is the updated description for the community. It now contains more detailed information about what this community is about."
+}
+
+> {%
+    client.test("Community updated", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Upload community icon (Admin only)
+### ==========================================================================
+# @name uploadCommunityIcon
+POST {{baseUrl}}/apis/Communityapi/{{communityId}}/icon
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="userId"
+
+{{userId}}
+------WebKitFormBoundary
+Content-Disposition: form-data; name="icon"; filename="community-icon.jpg"
+Content-Type: image/jpeg
+
+< ./test-images/community-icon.jpg
+------WebKitFormBoundary--
+
+> {%
+    client.test("Icon uploaded", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+    if (response.body.iconUrl) {
+        client.log("Icon URL: " + response.body.iconUrl);
+    }
+%}

@@ -1,0 +1,676 @@
+###############################################################################
+#                     REDDIT CLONE API DOCUMENTATION
+#                     HTTP Client for JetBrains IDEs
+#
+#                     Base URL: http://localhost:3000
+#                     Created: December 19, 2025
+#
+#                     IMPORTANT: Run requests in order!
+#                     Variables are automatically populated from responses.
+###############################################################################
+
+###############################################################################
+#                         DYNAMIC VARIABLES
+#          These will be populated automatically when you run requests
+###############################################################################
+
+@baseUrl = http://localhost:3000
+
+### ==========================================================================
+### HEALTH CHECK - Run this first to verify server is running
+### ==========================================================================
+
+### Check if server is running
+GET {{baseUrl}}/
+
+> {%
+    client.test("Server is running", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+###############################################################################
+#                           AUTHENTICATION
+#                           /api/auth
+#              Run signup first, then use login for existing users
+###############################################################################
+
+### ==========================================================================
+### Register a new user (generates unique username each time)
+### ==========================================================================
+POST {{baseUrl}}/api/auth/signup
+Content-Type: application/json
+
+{
+  "username": "user_{{$timestamp}}",
+  "email": "user_{{$timestamp}}@example.com",
+  "password": "password123"
+}
+
+> {%
+    client.test("User registered successfully", function() {
+        client.assert(response.status === 201 || response.status === 400, "Unexpected response");
+    });
+    if (response.body.user && response.body.user.id) {
+        client.global.set("userId", response.body.user.id);
+        client.global.set("username", response.body.user.username);
+        client.log("✅ User ID: " + response.body.user.id);
+        client.log("✅ Username: " + response.body.user.username);
+    }
+%}
+
+### ==========================================================================
+### Login with existing user (testuser exists in your DB)
+### ==========================================================================
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser@test.com",
+  "password": "password123"
+}
+
+> {%
+    if (response.status === 200 && response.body.user) {
+        client.global.set("userId", response.body.user.id);
+        client.global.set("username", response.body.user.username);
+        client.log("✅ Logged in as: " + response.body.user.username);
+        client.log("✅ User ID: " + response.body.user.id);
+    }
+%}
+
+### ==========================================================================
+### Logout (use after getting userId from login/signup)
+### ==========================================================================
+POST {{baseUrl}}/api/auth/logout
+Content-Type: application/json
+
+{
+  "userId": "{{$global.userId}}"
+}
+
+###############################################################################
+#                              USERS
+#                           /api/users
+###############################################################################
+
+### ==========================================================================
+### Get user profile by username
+### ==========================================================================
+GET {{baseUrl}}/api/users/profile/testuser
+
+> {%
+    if (response.status === 200) {
+        client.log("✅ Profile loaded for: " + response.body.username);
+        client.global.set("userId", response.body._id);
+    }
+%}
+
+### ==========================================================================
+### Update user profile (requires valid userId)
+### ==========================================================================
+PUT {{baseUrl}}/api/users/profile
+Content-Type: application/json
+
+{
+  "userId": "{{$global.userId}}",
+  "bio": "This is my updated bio - {{$timestamp}}",
+  "displayName": "My Display Name"
+}
+
+###############################################################################
+#                            COMMUNITIES
+#                        /apis/Communityapi
+###############################################################################
+
+### ==========================================================================
+### Get all communities
+### ==========================================================================
+GET {{baseUrl}}/apis/Communityapi
+
+> {%
+    client.test("Communities retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+    if (response.body && response.body.length > 0) {
+        client.global.set("communityId", response.body[0]._id);
+        client.global.set("communityName", response.body[0].name);
+        client.log("✅ Found " + response.body.length + " communities");
+        client.log("✅ First community: " + response.body[0].name + " (ID: " + response.body[0]._id + ")");
+    }
+%}
+
+### ==========================================================================
+### Search communities
+### ==========================================================================
+GET {{baseUrl}}/apis/Communityapi/search?q=comm
+
+### ==========================================================================
+### Create a new community (requires valid userId from login)
+### ==========================================================================
+POST {{baseUrl}}/apis/Communityapi
+Content-Type: application/json
+
+{
+  "name": "community_{{$timestamp}}",
+  "description": "This is a test community created at {{$timestamp}}",
+  "userId": "{{$global.userId}}"
+}
+
+> {%
+    if (response.status === 201 && response.body._id) {
+        client.global.set("communityId", response.body._id);
+        client.global.set("communityName", response.body.name);
+        client.log("✅ Community created: " + response.body.name);
+        client.log("✅ Community ID: " + response.body._id);
+    }
+%}
+
+### ==========================================================================
+### Get community by ID
+### ==========================================================================
+GET {{baseUrl}}/apis/Communityapi/{{$global.communityId}}
+
+### ==========================================================================
+### Get communities joined by user
+### ==========================================================================
+GET {{baseUrl}}/apis/Communityapi/user/{{$global.userId}}
+
+### ==========================================================================
+### Get communities owned by user
+### ==========================================================================
+GET {{baseUrl}}/apis/Communityapi/owned/{{$global.userId}}
+
+### ==========================================================================
+### Join a community
+### ==========================================================================
+POST {{baseUrl}}/apis/Communityapi/join
+Content-Type: application/json
+
+{
+  "communityId": "{{$global.communityId}}",
+  "userId": "{{$global.userId}}"
+}
+
+### ==========================================================================
+### Update community (admin only)
+### ==========================================================================
+PUT {{baseUrl}}/apis/Communityapi/{{$global.communityId}}
+Content-Type: application/json
+
+{
+  "userId": "{{$global.userId}}",
+  "description": "Updated description at {{$timestamp}}"
+}
+
+###############################################################################
+#                              POSTS
+#                          /apis/Postapi
+###############################################################################
+
+### ==========================================================================
+### Get all posts
+### ==========================================================================
+GET {{baseUrl}}/apis/Postapi
+
+> {%
+    client.test("Posts retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+    if (response.body && response.body.length > 0) {
+        client.global.set("postId", response.body[0]._id);
+        client.log("✅ Found " + response.body.length + " posts");
+        client.log("✅ First post ID: " + response.body[0]._id);
+    }
+%}
+
+### ==========================================================================
+### Get all posts with user vote status
+### ==========================================================================
+GET {{baseUrl}}/apis/Postapi?userId={{$global.userId}}
+
+### ==========================================================================
+### Get post by ID
+### ==========================================================================
+GET {{baseUrl}}/apis/Postapi/{{$global.postId}}
+
+### ==========================================================================
+### Create a new text post
+### ==========================================================================
+POST {{baseUrl}}/apis/Postapi
+Content-Type: application/json
+
+{
+  "title": "My Post - {{$timestamp}}",
+  "content": "This is the content of my post created at {{$timestamp}}.",
+  "postType": "text",
+  "author": "{{$global.userId}}",
+  "community": "{{$global.communityId}}"
+}
+
+> {%
+    if (response.status === 201 && response.body._id) {
+        client.global.set("postId", response.body._id);
+        client.log("✅ Post created with ID: " + response.body._id);
+    }
+%}
+
+### ==========================================================================
+### Create a link post
+### ==========================================================================
+POST {{baseUrl}}/apis/Postapi
+Content-Type: application/json
+
+{
+  "title": "Check out this website - {{$timestamp}}",
+  "content": "",
+  "postType": "link",
+  "linkUrl": "https://example.com",
+  "author": "{{$global.userId}}",
+  "community": "{{$global.communityId}}"
+}
+
+> {%
+    if (response.status === 201 && response.body._id) {
+        client.global.set("postId", response.body._id);
+        client.log("✅ Link post created with ID: " + response.body._id);
+    }
+%}
+
+### ==========================================================================
+### Update a post
+### ==========================================================================
+PUT {{baseUrl}}/apis/Postapi/{{$global.postId}}
+Content-Type: application/json
+
+{
+  "userId": "{{$global.userId}}",
+  "title": "Updated Post Title - {{$timestamp}}",
+  "content": "Updated post content"
+}
+
+### ==========================================================================
+### Delete a post
+### ==========================================================================
+DELETE {{baseUrl}}/apis/Postapi/{{$global.postId}}
+Content-Type: application/json
+
+{
+  "userId": "{{$global.userId}}"
+}
+
+###############################################################################
+#                              VOTES
+#                           /api/votes
+###############################################################################
+
+### ==========================================================================
+### Upvote a post
+### ==========================================================================
+POST {{baseUrl}}/api/votes
+Content-Type: application/json
+
+{
+  "postId": "{{$global.postId}}",
+  "userId": "{{$global.userId}}",
+  "value": 1
+}
+
+> {%
+    if (response.status === 200) {
+        client.log("✅ Upvoted! Score: " + response.body.score);
+    }
+%}
+
+### ==========================================================================
+### Downvote a post
+### ==========================================================================
+POST {{baseUrl}}/api/votes
+Content-Type: application/json
+
+{
+  "postId": "{{$global.postId}}",
+  "userId": "{{$global.userId}}",
+  "value": -1
+}
+
+### ==========================================================================
+### Remove vote from a post
+### ==========================================================================
+POST {{baseUrl}}/api/votes
+Content-Type: application/json
+
+{
+  "postId": "{{$global.postId}}",
+  "userId": "{{$global.userId}}",
+  "value": 0
+}
+
+###############################################################################
+#                            COMMENTS
+#                          /api/comments
+###############################################################################
+
+### ==========================================================================
+### Get all comments for a post
+### ==========================================================================
+GET {{baseUrl}}/api/comments/post/{{$global.postId}}
+
+> {%
+    if (response.status === 200 && response.body && response.body.length > 0) {
+        client.global.set("commentId", response.body[0]._id);
+        client.log("✅ Found " + response.body.length + " comments");
+    }
+%}
+
+### ==========================================================================
+### Get comment count for a post
+### ==========================================================================
+GET {{baseUrl}}/api/comments/post/{{$global.postId}}/count
+
+### ==========================================================================
+### Get all comments by a user
+### ==========================================================================
+GET {{baseUrl}}/api/comments/user/{{$global.userId}}
+
+### ==========================================================================
+### Create a new comment
+### ==========================================================================
+POST {{baseUrl}}/api/comments
+Content-Type: application/json
+
+{
+  "postId": "{{$global.postId}}",
+  "userId": "{{$global.userId}}",
+  "content": "This is my comment - {{$timestamp}}"
+}
+
+> {%
+    if (response.status === 201 && response.body._id) {
+        client.global.set("commentId", response.body._id);
+        client.log("✅ Comment created with ID: " + response.body._id);
+    }
+%}
+
+### ==========================================================================
+### Create a reply to a comment
+### ==========================================================================
+POST {{baseUrl}}/api/comments
+Content-Type: application/json
+
+{
+  "postId": "{{$global.postId}}",
+  "userId": "{{$global.userId}}",
+  "content": "This is a reply - {{$timestamp}}",
+  "parentCommentId": "{{$global.commentId}}"
+}
+
+### ==========================================================================
+### Update a comment
+### ==========================================================================
+PUT {{baseUrl}}/api/comments/{{$global.commentId}}
+Content-Type: application/json
+
+{
+  "userId": "{{$global.userId}}",
+  "content": "Updated comment - {{$timestamp}}"
+}
+
+### ==========================================================================
+### Upvote a comment
+### ==========================================================================
+POST {{baseUrl}}/api/comments/{{$global.commentId}}/vote
+Content-Type: application/json
+
+{
+  "userId": "{{$global.userId}}",
+  "value": 1
+}
+
+### ==========================================================================
+### Downvote a comment
+### ==========================================================================
+POST {{baseUrl}}/api/comments/{{$global.commentId}}/vote
+Content-Type: application/json
+
+{
+  "userId": "{{$global.userId}}",
+  "value": -1
+}
+
+### ==========================================================================
+### Delete a comment
+### ==========================================================================
+DELETE {{baseUrl}}/api/comments/{{$global.commentId}}
+Content-Type: application/json
+
+{
+  "userId": "{{$global.userId}}"
+}
+
+###############################################################################
+#                              CHAT
+#                           /api/chat
+###############################################################################
+
+### ==========================================================================
+### Get all users (for starting a chat)
+### ==========================================================================
+GET {{baseUrl}}/api/chat/users
+
+> {%
+    if (response.status === 200 && response.body && response.body.length > 1) {
+        // Get a different user to chat with
+        for (var i = 0; i < response.body.length; i++) {
+            if (response.body[i]._id !== client.global.get("userId")) {
+                client.global.set("receiverId", response.body[i]._id);
+                client.log("✅ Found user to chat with: " + response.body[i].username);
+                break;
+            }
+        }
+    }
+%}
+
+### ==========================================================================
+### Search users by username
+### ==========================================================================
+GET {{baseUrl}}/api/chat/users/search?q=test
+
+### ==========================================================================
+### Get or create a conversation
+### ==========================================================================
+POST {{baseUrl}}/api/chat/conversation
+Content-Type: application/json
+
+{
+  "senderId": "{{$global.userId}}",
+  "receiverId": "{{$global.receiverId}}"
+}
+
+> {%
+    if ((response.status === 200 || response.status === 201) && response.body._id) {
+        client.global.set("conversationId", response.body._id);
+        client.log("✅ Conversation ID: " + response.body._id);
+    }
+%}
+
+### ==========================================================================
+### Get all conversations for a user
+### ==========================================================================
+GET {{baseUrl}}/api/chat/conversations/{{$global.userId}}
+
+### ==========================================================================
+### Get messages in a conversation
+### ==========================================================================
+GET {{baseUrl}}/api/chat/messages/{{$global.conversationId}}
+
+### ==========================================================================
+### Send a message
+### ==========================================================================
+POST {{baseUrl}}/api/chat/message
+Content-Type: application/json
+
+{
+  "conversationId": "{{$global.conversationId}}",
+  "senderId": "{{$global.userId}}",
+  "content": "Hello! Test message at {{$timestamp}}"
+}
+
+###############################################################################
+#                            AI CHATBOT
+#                          /api/chatbot
+###############################################################################
+
+### ==========================================================================
+### Ask the AI chatbot a question
+### ==========================================================================
+POST {{baseUrl}}/api/chatbot/ask
+Content-Type: application/json
+
+{
+  "message": "What is Reddit and how does it work?"
+}
+
+### ==========================================================================
+### Ask chatbot with conversation history
+### ==========================================================================
+POST {{baseUrl}}/api/chatbot/ask
+Content-Type: application/json
+
+{
+  "message": "Can you explain more about that?",
+  "conversationHistory": [
+    {
+      "role": "user",
+      "content": "What is Reddit?"
+    },
+    {
+      "role": "assistant",
+      "content": "Reddit is a social news aggregation and discussion website..."
+    }
+  ]
+}
+
+###############################################################################
+#                         AI SUMMARIZATION
+#                           /apis/ai
+###############################################################################
+
+### ==========================================================================
+### Summarize a post
+### ==========================================================================
+POST {{baseUrl}}/apis/ai/summarize
+Content-Type: application/json
+
+{
+  "postId": "{{$global.postId}}"
+}
+
+###############################################################################
+#                    COMPLETE WORKFLOW EXAMPLE
+#           Run these in order to test the full flow
+###############################################################################
+
+### STEP 1: Login first
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser@test.com",
+  "password": "password123"
+}
+
+> {%
+    if (response.status === 200 && response.body.user) {
+        client.global.set("userId", response.body.user.id);
+        client.global.set("username", response.body.user.username);
+        client.log("STEP 1 ✅ Logged in as: " + response.body.user.username);
+    }
+%}
+
+### STEP 2: Get communities to find one to post in
+GET {{baseUrl}}/apis/Communityapi
+
+> {%
+    if (response.status === 200 && response.body.length > 0) {
+        client.global.set("communityId", response.body[0]._id);
+        client.log("STEP 2 ✅ Using community: " + response.body[0].name);
+    }
+%}
+
+### STEP 3: Create a post
+POST {{baseUrl}}/apis/Postapi
+Content-Type: application/json
+
+{
+  "title": "Workflow Test Post - {{$timestamp}}",
+  "content": "This post was created as part of the workflow test.",
+  "postType": "text",
+  "author": "{{$global.userId}}",
+  "community": "{{$global.communityId}}"
+}
+
+> {%
+    if (response.status === 201) {
+        client.global.set("postId", response.body._id);
+        client.log("STEP 3 ✅ Post created: " + response.body._id);
+    }
+%}
+
+### STEP 4: Add a comment
+POST {{baseUrl}}/api/comments
+Content-Type: application/json
+
+{
+  "postId": "{{$global.postId}}",
+  "userId": "{{$global.userId}}",
+  "content": "Great workflow test post!"
+}
+
+> {%
+    if (response.status === 201) {
+        client.global.set("commentId", response.body._id);
+        client.log("STEP 4 ✅ Comment added: " + response.body._id);
+    }
+%}
+
+### STEP 5: Upvote the post
+POST {{baseUrl}}/api/votes
+Content-Type: application/json
+
+{
+  "postId": "{{$global.postId}}",
+  "userId": "{{$global.userId}}",
+  "value": 1
+}
+
+> {%
+    if (response.status === 200) {
+        client.log("STEP 5 ✅ Post upvoted! Score: " + response.body.score);
+    }
+%}
+
+###############################################################################
+#                          NOTES
+###############################################################################
+
+# Status Codes:
+# 200 - OK (successful GET, PUT)
+# 201 - Created (successful POST)
+# 400 - Bad Request (missing required fields, invalid data)
+# 401 - Unauthorized (not logged in)
+# 403 - Forbidden (not authorized for this action)
+# 404 - Not Found (resource doesn't exist)
+# 500 - Server Error (internal error)
+
+# Variable Usage:
+# {{$global.variableName}} - Use variables saved from previous responses
+# {{$timestamp}} - Generate unique timestamp
+# {{$random.integer(min, max)}} - Generate random number
+
+# Tips:
+# 1. Always run Login first to set userId
+# 2. Get Communities to set communityId before creating posts
+# 3. Get Posts to set postId before voting/commenting
+# 4. Variables persist across requests in the same session
+

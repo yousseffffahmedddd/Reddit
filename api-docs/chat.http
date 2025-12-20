@@ -1,0 +1,158 @@
+###############################################################################
+#                          CHAT API
+#                         /api/chat
+###############################################################################
+
+# Dynamic Variables - edit these or they will be set from responses
+@baseUrl = http://localhost:3000
+@userId = YOUR_USER_ID
+@conversationId = YOUR_CONVERSATION_ID
+@receiverId = OTHER_USER_ID
+
+### ==========================================================================
+### Get all users (for starting a new conversation)
+### Returns list of all users you can chat with
+### ==========================================================================
+# @name getAllUsers
+GET {{baseUrl}}/api/chat/users
+
+> {%
+    client.test("Users retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(Array.isArray(response.body), "Response should be an array");
+    });
+%}
+
+### ==========================================================================
+### Search users by username
+### Find users to start a conversation with
+### ==========================================================================
+# @name searchUsers
+GET {{baseUrl}}/api/chat/users/search?q=test
+
+> {%
+    client.test("Search completed", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Search users with different query
+### ==========================================================================
+# @name searchUsersQuery
+GET {{baseUrl}}/api/chat/users/search?q={{username}}
+
+### ==========================================================================
+### Get or create a conversation
+### If a conversation exists between the two users, returns it
+### If not, creates a new conversation
+### ==========================================================================
+# @name getOrCreateConversation
+POST {{baseUrl}}/api/chat/conversation
+Content-Type: application/json
+
+{
+  "senderId": "{{userId}}",
+  "receiverId": "OTHER_USER_ID_HERE"
+}
+
+> {%
+    client.test("Conversation created/retrieved", function() {
+        client.assert(response.status === 200 || response.status === 201, "Unexpected status");
+    });
+    if (response.body._id) {
+        client.global.set("conversationId", response.body._id);
+        client.log("Conversation ID: " + response.body._id);
+    }
+%}
+
+### ==========================================================================
+### Get all conversations for a user
+### Returns all conversations the user is part of
+### ==========================================================================
+# @name getUserConversations
+GET {{baseUrl}}/api/chat/conversations/{{userId}}
+
+> {%
+    client.test("Conversations retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Get messages in a conversation
+### Returns all messages in chronological order
+### ==========================================================================
+# @name getMessages
+GET {{baseUrl}}/api/chat/messages/{{conversationId}}
+
+> {%
+    client.test("Messages retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Send a message
+### Sends a message in the specified conversation
+### ==========================================================================
+# @name sendMessage
+POST {{baseUrl}}/api/chat/message
+Content-Type: application/json
+
+{
+  "conversationId": "{{conversationId}}",
+  "senderId": "{{userId}}",
+  "content": "Hello! This is a test message."
+}
+
+> {%
+    client.test("Message sent", function() {
+        client.assert(response.status === 201, "Response status is not 201");
+    });
+    if (response.body._id) {
+        client.log("Message ID: " + response.body._id);
+    }
+%}
+
+### ==========================================================================
+### Send another message
+### ==========================================================================
+# @name sendFollowUpMessage
+POST {{baseUrl}}/api/chat/message
+Content-Type: application/json
+
+{
+  "conversationId": "{{conversationId}}",
+  "senderId": "{{userId}}",
+  "content": "This is a follow-up message to continue our conversation."
+}
+
+### ==========================================================================
+### WORKFLOW: Complete chat flow
+### 1. Search for a user
+### 2. Create conversation with them
+### 3. Send a message
+### ==========================================================================
+
+### Step 1: Search for user
+# GET {{baseUrl}}/api/chat/users/search?q=john
+
+### Step 2: Create conversation (use the user ID from step 1)
+# POST {{baseUrl}}/api/chat/conversation
+# Content-Type: application/json
+#
+# {
+#   "senderId": "{{userId}}",
+#   "receiverId": "USER_ID_FROM_SEARCH"
+# }
+
+### Step 3: Send message (use conversation ID from step 2)
+# POST {{baseUrl}}/api/chat/message
+# Content-Type: application/json
+#
+# {
+#   "conversationId": "CONVERSATION_ID_FROM_STEP_2",
+#   "senderId": "{{userId}}",
+#   "content": "Hey! How are you?"
+# }

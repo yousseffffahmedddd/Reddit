@@ -1,0 +1,208 @@
+###############################################################################
+#                        COMMENTS API
+#                       /api/comments
+###############################################################################
+
+# Dynamic Variables - edit these or they will be set from responses
+@baseUrl = http://localhost:3000
+@userId = YOUR_USER_ID
+@postId = YOUR_POST_ID
+@commentId = YOUR_COMMENT_ID
+
+### ==========================================================================
+### Get all comments for a post
+### Returns nested comment tree with replies
+### ==========================================================================
+# @name getCommentsByPost
+GET {{baseUrl}}/api/comments/post/{{postId}}
+
+> {%
+    client.test("Comments retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(Array.isArray(response.body), "Response should be an array");
+    });
+%}
+
+### ==========================================================================
+### Get comments with user vote status
+### Pass userId to see which comments the user has voted on
+### ==========================================================================
+# @name getCommentsWithVotes
+GET {{baseUrl}}/api/comments/post/{{postId}}?userId={{userId}}
+
+> {%
+    client.test("Comments with votes retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Get comment count for a post
+### ==========================================================================
+# @name getCommentCount
+GET {{baseUrl}}/api/comments/post/{{postId}}/count
+
+> {%
+    client.test("Count retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Get a single comment by ID
+### ==========================================================================
+# @name getCommentById
+GET {{baseUrl}}/api/comments/{{commentId}}
+
+> {%
+    client.test("Comment retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Get all comments by a user
+### ==========================================================================
+# @name getUserComments
+GET {{baseUrl}}/api/comments/user/{{userId}}
+
+> {%
+    client.test("User comments retrieved", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Create a top-level comment
+### ==========================================================================
+# @name createComment
+POST {{baseUrl}}/api/comments
+Content-Type: application/json
+
+{
+  "postId": "{{postId}}",
+  "userId": "{{userId}}",
+  "content": "This is my comment on the post. Great content!"
+}
+
+> {%
+    client.test("Comment created", function() {
+        client.assert(response.status === 201, "Response status is not 201");
+    });
+    if (response.body._id) {
+        client.global.set("commentId", response.body._id);
+        client.log("Comment ID saved: " + response.body._id);
+    }
+%}
+
+### ==========================================================================
+### Create a reply to a comment
+### Set parentCommentId to the comment you're replying to
+### ==========================================================================
+# @name createReply
+POST {{baseUrl}}/api/comments
+Content-Type: application/json
+
+{
+  "postId": "{{postId}}",
+  "userId": "{{userId}}",
+  "content": "This is a reply to your comment!",
+  "parentCommentId": "{{commentId}}"
+}
+
+> {%
+    client.test("Reply created", function() {
+        client.assert(response.status === 201, "Response status is not 201");
+    });
+%}
+
+### ==========================================================================
+### Update a comment
+### Only the author can update their comment
+### ==========================================================================
+# @name updateComment
+PUT {{baseUrl}}/api/comments/{{commentId}}
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "content": "This is my edited comment. I made some changes."
+}
+
+> {%
+    client.test("Comment updated", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Delete a comment
+### Only the author can delete their comment
+### ==========================================================================
+# @name deleteComment
+DELETE {{baseUrl}}/api/comments/{{commentId}}
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}"
+}
+
+> {%
+    client.test("Comment deleted", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Upvote a comment
+### ==========================================================================
+# @name upvoteComment
+POST {{baseUrl}}/api/comments/{{commentId}}/vote
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "value": 1
+}
+
+> {%
+    client.test("Upvote recorded", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Downvote a comment
+### ==========================================================================
+# @name downvoteComment
+POST {{baseUrl}}/api/comments/{{commentId}}/vote
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "value": -1
+}
+
+> {%
+    client.test("Downvote recorded", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Remove vote from a comment
+### ==========================================================================
+# @name removeCommentVote
+POST {{baseUrl}}/api/comments/{{commentId}}/vote
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "value": 0
+}
+
+> {%
+    client.test("Vote removed", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}

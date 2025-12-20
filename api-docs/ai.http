@@ -1,0 +1,172 @@
+###############################################################################
+#                       AI FEATURES API
+#                    /api/chatbot & /apis/ai
+###############################################################################
+
+# Dynamic Variables - edit these or they will be set from responses
+@baseUrl = http://localhost:3000
+@userId = YOUR_USER_ID
+@postId = YOUR_POST_ID
+
+### ==========================================================================
+###                         AI CHATBOT
+###                       /api/chatbot
+### ==========================================================================
+
+### ==========================================================================
+### Ask the AI chatbot a simple question
+### ==========================================================================
+# @name askChatbotSimple
+POST {{baseUrl}}/api/chatbot/ask
+Content-Type: application/json
+
+{
+  "message": "What is Reddit and how does it work?",
+  "userId": "{{userId}}"
+}
+
+> {%
+    client.test("Chatbot responded", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+    if (response.body.response) {
+        client.log("AI Response: " + response.body.response.substring(0, 100) + "...");
+    }
+%}
+
+### ==========================================================================
+### Ask about technology
+### ==========================================================================
+# @name askAboutTech
+POST {{baseUrl}}/api/chatbot/ask
+Content-Type: application/json
+
+{
+  "message": "Can you explain what machine learning is in simple terms?",
+  "userId": "{{userId}}"
+}
+
+### ==========================================================================
+### Ask a follow-up question with conversation history
+### Maintains context from previous messages
+### ==========================================================================
+# @name askWithHistory
+POST {{baseUrl}}/api/chatbot/ask
+Content-Type: application/json
+
+{
+  "message": "Can you give me an example of that?",
+  "userId": "{{userId}}",
+  "conversationHistory": [
+    {
+      "role": "user",
+      "content": "What is machine learning?"
+    },
+    {
+      "role": "assistant",
+      "content": "Machine learning is a type of artificial intelligence that allows computers to learn and improve from experience without being explicitly programmed."
+    }
+  ]
+}
+
+> {%
+    client.test("Chatbot responded with context", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### Ask for help with Reddit
+### ==========================================================================
+# @name askRedditHelp
+POST {{baseUrl}}/api/chatbot/ask
+Content-Type: application/json
+
+{
+  "message": "How do I create a post on this platform?",
+  "userId": "{{userId}}"
+}
+
+### ==========================================================================
+### Ask a complex question
+### ==========================================================================
+# @name askComplex
+POST {{baseUrl}}/api/chatbot/ask
+Content-Type: application/json
+
+{
+  "message": "What are the best practices for community moderation on social media platforms?",
+  "userId": "{{userId}}"
+}
+
+### ==========================================================================
+###                      POST SUMMARIZATION
+###                         /apis/ai
+### ==========================================================================
+
+### ==========================================================================
+### Summarize a post by ID
+### Generates an AI summary of the post content
+### ==========================================================================
+# @name summarizePost
+POST {{baseUrl}}/apis/ai/summarize
+Content-Type: application/json
+
+{
+  "postId": "{{postId}}"
+}
+
+> {%
+    client.test("Summary generated", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+    if (response.body.summary) {
+        client.log("Summary: " + response.body.summary);
+    }
+%}
+
+### ==========================================================================
+### Summarize custom content
+### You can also pass custom content to summarize
+### ==========================================================================
+# @name summarizeCustomContent
+POST {{baseUrl}}/apis/ai/summarize
+Content-Type: application/json
+
+{
+  "postId": "{{postId}}",
+  "content": "This is a very long article about the future of technology. It discusses how artificial intelligence is transforming various industries including healthcare, finance, and education. The article goes into detail about specific use cases such as AI-powered diagnostics in hospitals, algorithmic trading in financial markets, and personalized learning systems in schools. Furthermore, it explores the ethical implications of widespread AI adoption, including concerns about job displacement, privacy, and algorithmic bias. The conclusion suggests that while AI presents significant challenges, its potential benefits for society are substantial if properly regulated and implemented with human welfare in mind."
+}
+
+> {%
+    client.test("Custom content summarized", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### ==========================================================================
+### WORKFLOW: Summarize and discuss a post
+### 1. Get a post
+### 2. Summarize it
+### 3. Ask the chatbot about it
+### ==========================================================================
+
+### Step 1: Get a post
+# GET {{baseUrl}}/apis/Postapi/{{postId}}
+
+### Step 2: Summarize the post
+# POST {{baseUrl}}/apis/ai/summarize
+# Content-Type: application/json
+#
+# {
+#   "postId": "{{postId}}"
+# }
+
+### Step 3: Ask chatbot about the summary
+# POST {{baseUrl}}/api/chatbot/ask
+# Content-Type: application/json
+#
+# {
+#   "message": "Based on this summary: [SUMMARY_FROM_STEP_2], what are the key points I should know?",
+#   "userId": "{{userId}}"
+# }

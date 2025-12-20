@@ -121,7 +121,7 @@ export function ChatPopup() {
           {view === 'chat' && !isMinimized ? (
             <div className="flex items-center gap-2">
               <div className="relative">
-                <Avatar src={otherAvatar} alt={otherName} size="xs" className="bg-primary-foreground/20 text-primary-foreground border border-primary-foreground/30" />
+                <Avatar src={otherAvatar??null} alt={otherName} size="xs" className="bg-primary-foreground/20 text-primary-foreground border border-primary-foreground/30" />
                 {isOnline && (
                   <span className="absolute bottom-0 right-0 block h-2 w-2 rounded-full bg-green-400 ring-1 ring-primary" />
                 )}
@@ -187,8 +187,8 @@ export function ChatPopup() {
                   conversations?.map((conv) => {
                     const other = getOtherParticipant(conv);
                     const name = typeof other === 'object' ? other?.username : 'Unknown';
-                    const avatar = typeof other === 'object' ? (other as any)?.avatarUrl : null;
-                    
+                    const avatar = typeof other === 'object' ? (other as { avatarUrl?: string })?.avatarUrl : null;
+
                     return (
                       <button
                         key={conv._id}
@@ -199,7 +199,7 @@ export function ChatPopup() {
                         className="flex w-full items-center gap-3 rounded-lg p-3 hover:bg-secondary/50 transition-colors text-left"
                       >
                         <div className="relative shrink-0">
-                          <Avatar src={avatar} alt={name} size="md" />
+                          <Avatar src={avatar??null} alt={name} size="md" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-0.5">
@@ -239,7 +239,7 @@ export function ChatPopup() {
                     onClick={() => handleStartConversation(chatUser._id)}
                     className="flex w-full items-center gap-3 rounded-md p-2 hover:bg-muted text-left"
                   >
-                    <Avatar src={chatUser.avatarUrl} alt={chatUser.username} size="sm" />
+                    <Avatar src={null} alt={chatUser.username} size="sm" />
                     <span className="font-medium text-sm">{chatUser.username}</span>
                   </button>
                 ))}

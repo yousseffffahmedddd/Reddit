@@ -1,0 +1,90 @@
+###############################################################################
+#                          VOTES API
+#                         /api/votes
+###############################################################################
+
+# Dynamic Variables - edit these or they will be set from responses
+@baseUrl = http://localhost:3000
+@userId = YOUR_USER_ID
+@postId = YOUR_POST_ID
+
+### ==========================================================================
+### Upvote a post
+### value: 1 for upvote
+### ==========================================================================
+# @name upvotePost
+POST {{baseUrl}}/api/votes
+Content-Type: application/json
+
+{
+  "postId": "{{postId}}",
+  "userId": "{{userId}}",
+  "value": 1
+}
+
+> {%
+    client.test("Upvote recorded", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+    client.log("Score: " + response.body.score);
+    client.log("Upvotes: " + response.body.upvotes);
+    client.log("Downvotes: " + response.body.downvotes);
+%}
+
+### ==========================================================================
+### Downvote a post
+### value: -1 for downvote
+### ==========================================================================
+# @name downvotePost
+POST {{baseUrl}}/api/votes
+Content-Type: application/json
+
+{
+  "postId": "{{postId}}",
+  "userId": "{{userId}}",
+  "value": -1
+}
+
+> {%
+    client.test("Downvote recorded", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+    client.log("Score: " + response.body.score);
+    client.log("Upvotes: " + response.body.upvotes);
+    client.log("Downvotes: " + response.body.downvotes);
+%}
+
+### ==========================================================================
+### Remove vote from a post
+### value: 0 to remove existing vote
+### ==========================================================================
+# @name removePostVote
+POST {{baseUrl}}/api/votes
+Content-Type: application/json
+
+{
+  "postId": "{{postId}}",
+  "userId": "{{userId}}",
+  "value": 0
+}
+
+> {%
+    client.test("Vote removed", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+    client.log("Score: " + response.body.score);
+%}
+
+### ==========================================================================
+### Toggle vote (if already upvoted, this will remove the vote)
+### Clicking the same vote button twice removes the vote
+### ==========================================================================
+# @name toggleVote
+POST {{baseUrl}}/api/votes
+Content-Type: application/json
+
+{
+  "postId": "{{postId}}",
+  "userId": "{{userId}}",
+  "value": 1
+}
