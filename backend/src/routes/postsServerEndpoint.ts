@@ -1,6 +1,6 @@
 // src/routes/posts.ts
 import express from "express";
-import { createPost, getAllPosts, votePost, getPostById, updatePost, deletePost } from "../controllers/postController";
+import { createPost, getAllPosts, votePost, getPostById, updatePost, deletePost, getPopularPosts } from "../controllers/postController";
 import { uploadPostImage } from "../middleware/upload";
 
 const router = express.Router();
@@ -22,6 +22,9 @@ router.post("/upload", uploadPostImage.single("image"), (req, res) => {
 
 // Create a new post
 router.post("/", createPost);
+
+// GET popular/hot posts (sorted by hot score algorithm) - MUST come before /:postId
+router.get("/popular", getPopularPosts);
 
 // GET all posts
 router.get("/", getAllPosts);

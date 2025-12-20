@@ -62,6 +62,20 @@ export const fetchPosts = async (userId?: string): Promise<BackendPost[]> => {
     return response.json();
 };
 
+export const fetchPopularPosts = async (userId?: string): Promise<BackendPost[]> => {
+    const url = userId
+        ? `${POST_API_URL}/popular?userId=${userId}`
+        : `${POST_API_URL}/popular`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch popular posts");
+    }
+
+    return response.json();
+};
+
 export const fetchPost = async (postId: string): Promise<BackendPost> => {
     const response = await fetch(`${POST_API_URL}/${postId}`);
     if (!response.ok) {

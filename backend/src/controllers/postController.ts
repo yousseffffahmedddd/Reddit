@@ -399,3 +399,96 @@ export const deletePost = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Server error" });
     }
 };
+
+// Helper for hot score calculation
+const hotScore = (post: any) => {
+    const score = (post.upvotes || 0) - (post.downvotes || 0);
+    const order = Math.log10(Math.max(Math.abs(score), 1));
+    // The 'post' object from .lean() will have createdAt as a Date object
+    const seconds = (new Date(post.createdAt).getTime() / 1000) - 1134028003;
+    return order + seconds / 45000;
+  };
+  
+  // --- GET POPULAR POSTS ---
+  export const getPopularPosts = async (req: Request, res: Response) => {
+      try {
+          const { userId } = req.query; // Optional: current user ID to check their votes
+  
+          // Get posts without populate first. Not sorting here, will sort by hot score later.
+          const posts = await Post.find().lean();
+  
+          // Manually populate author, community, and get comment counts
+          const populatedPosts = await Promise.all(
+              posts.map(async (post: any) => {
+                  try {
+                      const author = await User.findById(post.author).select('username').lean();
+                      const community = await Community.findById(post.community).select('name').lean();
+                      const commentCount = await Comment.countDocuments({ postId: post._id });
+  
+                      let processedPost = {
+                          ...post,
+                          author: author ? { _id: author._id, username: author.username } : { _id: post.author, username: 'Unknown' },
+                          community: community ? { _id: community._id, name: community.name } : { _id: post.community, name: 'Unknown' },
+                          commentCount,
+                      };
+  
+                      // Convert image URL to data URL to hide the file path
+                      if (processedPost.imageUrl && (processedPost.imageUrl.includes('/uploads/posts/') || processedPost.imageUrl.startsWith('/uploads/posts/'))) {
+                          let relativePath = processedPost.imageUrl;
+                          if (relativePath.startsWith('http')) {
+                              const url = new URL(relativePath);
+                              relativePath = url.pathname;
+                          }
+                          
+                          const imagePath = path.join(PROJECT_ROOT, 'uploads', relativePath);
+                          const dataUrl = getImageAsDataUrl(imagePath);
+                          if (dataUrl) {
+                              processedPost.imageUrl = dataUrl;
+                          }
+                      }
+  
+                      return processedPost;
+                  } catch (error) {
+                      console.error('Error populating post:', post._id, error);
+                      return {
+                          ...post,
+                          author: { _id: post.author, username: 'Unknown' },
+                          community: { _id: post.community, name: 'Unknown' },
+                      };
+                  }
+              })
+          );
+  
+          // Calculate score for each post
+          const postsWithScores = populatedPosts.map((post: any) => {
+              const score = post.votes ? post.votes.reduce((acc: number, vote: any) => acc + vote.value, 0) : 0;
+              const upvotes = post.votes ? post.votes.filter((v: any) => v.value === 1).length : 0;
+              const downvotes = post.votes ? post.votes.filter((v: any) => v.value === -1).length : 0;
+  
+              let userVote = 0;
+              if (userId && post.votes) {
+                  const userVoteObj = post.votes.find((v: any) => v.userId.toString() === userId);
+                  if (userVoteObj) {
+                      userVote = userVoteObj.value;
+                  }
+              }
+  
+              return {
+                  ...post,
+                  score,
+                  upvotes,
+                  downvotes,
+                  userVote,
+                  commentCount: post.commentCount || 0
+              };
+          });
+          
+          // Sort by hot score
+          const sortedPosts = postsWithScores.sort((a, b) => hotScore(b) - hotScore(a));
+  
+          res.status(200).json(sortedPosts);
+      } catch (err) {
+          console.error("Error fetching popular posts:", err);
+          res.status(500).json({ message: "Server error" });
+      }
+  };
