@@ -9,7 +9,7 @@ import {
     getCommentCount,
     getUserComments,
     voteComment,
-} from "../controllers/commentController.ts";
+} from "../controllers/commentController";
 
 const router = express.Router();
 
@@ -38,4 +38,3 @@ router.get("/user/:userId", getUserComments);
 router.post("/:commentId/vote", voteComment);
 
 export default router;
-

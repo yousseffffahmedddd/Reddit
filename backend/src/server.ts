@@ -8,8 +8,8 @@ import { Server } from "socket.io";
 import { connectDatabase } from "./config/database"; // Removed .ts extension
 
 import authRoutes from "./routes/authRoutes";
-import postsRoutes from "./routes/postsServerEndpoint.ts";
-import communityRoutes from "./routes/CommunityServerEndpoint.ts";
+import postsRoutes from "./routes/postsServerEndpoint";
+import communityRoutes from "./routes/CommunityServerEndpoint";
 import aiRoute from "./routes/aiRoute";
 import chatRoutes from "./routes/chatRoute";
 import chatbotRoutes from "./routes/chatBotRoutes";

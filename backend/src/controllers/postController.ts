@@ -2,8 +2,8 @@ import express from "express";
 import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
-import Post from "../models/PostSchema.ts";
-import User from "../models/UserSchema.ts";
+import Post from "../models/PostSchema";
+import User from "../models/UserSchema";
 import Community from "../models/CommunitySchema";
 import Comment from "../models/CommentSchema";
 

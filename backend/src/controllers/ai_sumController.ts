@@ -45,10 +45,21 @@ Use clear, neutral language.
             }
         );
 
-        const data = await response.json();
+        if (!response.ok) {
+            const text = await response.text();
+            return res.status(502).json({ message: "AI service error", details: text });
+        }
+
+        // Type the JSON to avoid 'unknown' error
+        type ChatCompletion = {
+            choices?: Array<{ message?: { content?: string } }>
+        };
+        const data = (await response.json()) as ChatCompletion;
+
+        const summary = data?.choices?.[0]?.message?.content ?? "No summary available.";
 
         res.status(200).json({
-            summary: data.choices[0].message.content,
+            summary,
         });
     } catch (error) {
         console.error("AI summarize error:", error);

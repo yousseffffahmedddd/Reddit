@@ -1,5 +1,5 @@
 import express from "express";
-import { summarizePost } from "../controllers/ai_sumController.ts";
+import { summarizePost } from "../controllers/ai_sumController";
 
 const router = express.Router();
 
