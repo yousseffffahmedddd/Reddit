@@ -4,8 +4,8 @@ import fs from "fs";
 import path from "path";
 import Post from "../models/PostSchema.ts";
 import User from "../models/UserSchema.ts";
-import Community from "../models/CommunitySchema.ts";
-import Comment from "../models/CommentSchema.ts";
+import Community from "../models/CommunitySchema";
+import Comment from "../models/CommentSchema";
 
 // Get the project root directory
 const PROJECT_ROOT = path.resolve(process.cwd());

@@ -1,8 +1,8 @@
 // filepath: /home/awail/WebstormProjects/Reddit_clone/backend/src/controllers/commentController.ts
 import express from "express";
 import mongoose from "mongoose";
-import Comment from "../models/CommentSchema.ts";
-import Post from "../models/PostSchema.ts";
+import Comment from "../models/CommentSchema";
+import Post from "../models/PostSchema";
 
 type Request = express.Request;
 type Response = express.Response;
