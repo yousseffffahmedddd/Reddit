@@ -4,6 +4,7 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tansta
 import { getUserId } from '@/apis/authApi';
 import {
     fetchPosts as fetchPostsApi,
+    fetchPopularPosts as fetchPopularPostsApi,
     fetchPost as fetchPostApi,
     createPost as createPostApi,
     updatePost as updatePostApi,
@@ -96,7 +97,11 @@ interface FetchPostsParams {
 
 async function fetchPosts(params: FetchPostsParams): Promise<PaginatedResponse<Post>> {
   const currentUserId = getUserId();
-  const backendPosts = await fetchPostsApi(currentUserId || undefined);
+  
+  // Use popular/hot endpoint for 'hot' sort (default), otherwise use regular endpoint
+  const backendPosts = (/*params.sort === 'hot' || */  params.sort === 'popular' || !params.sort)
+    ? await fetchPopularPostsApi(currentUserId || undefined)
+    : await fetchPostsApi(currentUserId || undefined);
 
   // Transform and filter posts on client side
   let posts = backendPosts.map(transformPost);
@@ -121,12 +126,13 @@ async function fetchPosts(params: FetchPostsParams): Promise<PaginatedResponse<P
     );
   }
 
-  // Sort posts (client-side since backend doesn't support it)
+  // Sort posts (client-side for non-hot sorts since backend doesn't support all)
   if (params.sort === 'new') {
     posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  } else if (params.sort === 'top' || params.sort === 'popular') {
+  } else if (params.sort === 'top') {
     posts.sort((a, b) => (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes));
   }
+  // 'hot' sort is already handled by the backend
 
   return {
     data: posts,

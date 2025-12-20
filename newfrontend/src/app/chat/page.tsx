@@ -73,7 +73,7 @@ export default function ChatPage() {
       const participant = participants.find(p => 
         typeof p === 'object' && p._id !== user.id
       );
-      return participant as { _id: string; username: string } | undefined;
+      return participant as { _id: string; username: string; avatarUrl?: string } | undefined;
     }
     return null;
   };
@@ -113,7 +113,7 @@ export default function ChatPage() {
                   onClick={() => handleStartConversation(chatUser._id)}
                   className="flex w-full items-center gap-3 rounded-md p-2 hover:bg-muted"
                 >
-                  <Avatar src={null} alt={chatUser.username} size="sm" />
+                  <Avatar src={chatUser.avatarUrl ?? null} alt={chatUser.username} size="sm" />
                   <span className="font-medium">{chatUser.username}</span>
                 </button>
               ))}
@@ -143,7 +143,7 @@ export default function ChatPage() {
                       selectedConversation === conversation._id && 'bg-muted'
                     )}
                   >
-                    <Avatar src={null} alt={otherName || ''} size="sm" />
+                    <Avatar src={typeof other === 'object' ? other?.avatarUrl ?? null : null} alt={otherName || ''} size="sm" />
                     <div className="flex-1 text-left">
                       <p className="font-medium">{otherName}</p>
                       {conversation.lastMessage && (

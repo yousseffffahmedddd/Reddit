@@ -10,11 +10,13 @@ export interface ChatUser {
     _id: string;
     username: string;
     email?: string;
+    avatarUrl?: string;
 }
 
 export interface Participant {
     _id: string;
     username: string;
+    avatarUrl?: string;
 }
 
 export interface Message {

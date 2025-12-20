@@ -11,7 +11,7 @@ import type { PostSortType } from '@/types';
 const sortOptions: { value: PostSortType; label: string; icon: typeof Flame }[] = [
   { value: 'hot', label: 'Hot', icon: Flame },
   { value: 'new', label: 'New', icon: Clock },
-  { value: 'popular', label: 'Popular', icon: TrendingUp },
+  // { value: 'popular', label: 'Popular', icon: TrendingUp },
   { value: 'top', label: 'Top', icon: Award },
 ];
 

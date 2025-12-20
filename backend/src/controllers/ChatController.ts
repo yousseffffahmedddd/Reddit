@@ -15,13 +15,13 @@ export const getOrCreateConversation = async (req: Request, res: Response) => {
         let conversation = await Conversation.findOne({
             participants: { $all: [userId, otherUserId],
             $size:2},
-        }).populate("participants", "username");
+        }).populate("participants", "username avatarUrl");
 
         if (!conversation) {
             conversation = await Conversation.create({
                 participants: [userId, otherUserId],
             });
-            conversation = await conversation.populate("participants", "username");
+            conversation = await conversation.populate("participants", "username avatarUrl");
         }
 
         res.status(200).json(conversation);
@@ -43,7 +43,7 @@ export const getUserConversations = async (req: Request, res: Response) => {
         const conversations = await Conversation.find({
             participants: userId,
         })
-            .populate("participants", "username")
+            .populate("participants", "username avatarUrl")
             .sort({ updatedAt: -1 });
 
         // Get last message for each conversation
@@ -117,7 +117,7 @@ export const sendMessage = async (req: Request, res: Response) => {
 // Get all users (for starting new conversations)
 export const getAllUsers = async (req: Request, res: Response) => {
     try {
-        const users = await User.find({}, "username email").limit(50);
+        const users = await User.find({}, "username email avatarUrl").limit(50);
         res.status(200).json(users);
     } catch (error) {
         console.error(error);
@@ -136,7 +136,7 @@ export const searchUsers = async (req: Request, res: Response) => {
 
         const users = await User.find({
             username: { $regex: q, $options: "i" },
-        }, "username email").limit(20);
+        }, "username email avatarUrl").limit(20);
 
         res.status(200).json(users);
     } catch (error) {

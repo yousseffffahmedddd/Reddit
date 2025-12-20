@@ -5,6 +5,9 @@ import { useRouter, useParams } from 'next/navigation';
 import { Button, Input, Textarea, Modal } from '@/components/ui';
 import { usePost, useUpdatePost, useCommunities } from '@/hooks';
 import { Loader } from '@/components/ui';
+import { Avatar } from '@/components/ui';
+import { useAuthStore } from '@/hooks';
+
 import type { PostType } from '@/types';
 
 export default function EditPostPage() {

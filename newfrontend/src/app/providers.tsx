@@ -5,7 +5,7 @@ import { QueryProvider, ThemeProvider } from '@/providers';
 // MSW Provider removed - using real backend API
 // import { MSWProvider } from '@/mocks/MSWProvider';
 import { Header, LeftSidebar, RightSidebar, AuthModal } from '@/components/layout';
-import { ErrorBoundary } from '@/components/ui';
+import { ErrorBoundary, LoadingBar } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -30,6 +30,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryProvider>
       <ThemeProvider>
         <ErrorBoundary>
+          <LoadingBar />
           <div className="min-h-screen bg-background">
             <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} onAuthClick={openAuthModal} />
             <div className="flex min-h-[calc(100vh-48px)]">

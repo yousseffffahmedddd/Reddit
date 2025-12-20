@@ -75,7 +75,7 @@ export function ChatPopup() {
   const activeConversation = conversations?.find(c => c._id === selectedConversationId);
   const otherParticipant = activeConversation ? getOtherParticipant(activeConversation) : null;
   const otherName = typeof otherParticipant === 'object' ? otherParticipant?.username : 'Chat';
-  const otherAvatar = typeof otherParticipant === 'object' ? otherParticipant?.avatarUrl : null;
+  const otherAvatar = typeof otherParticipant === 'object' ? otherParticipant?.avatarUrl ?? null : null;
   const isOnline = false; // We don't have real-time online status yet
 
   if (!isAuthenticated) return null;
@@ -239,7 +239,7 @@ export function ChatPopup() {
                     onClick={() => handleStartConversation(chatUser._id)}
                     className="flex w-full items-center gap-3 rounded-md p-2 hover:bg-muted text-left"
                   >
-                    <Avatar src={chatUser.avatarUrl} alt={chatUser.username} size="sm" />
+                    <Avatar src={chatUser.avatarUrl ?? null} alt={chatUser.username} size="sm" />
                     <span className="font-medium text-sm">{chatUser.username}</span>
                   </button>
                 ))}
