@@ -2,7 +2,7 @@
 // Re-export API utilities for backward compatibility
 // All API logic is now in /src/apis/*
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://44.192.94.63:3000';
 
 // Re-export from authApi
 export { getToken, getUserId, setToken, setUserId } from '@/apis/authApi';

@@ -7,7 +7,7 @@ import { useCreatePost, useJoinedCommunities, useUpdatePost } from '@/hooks';
 import type { PostType } from '@/types';
 
 const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    process.env.NEXT_PUBLIC_API_URL || 'http://44.192.94.63:3000';
 
 interface CreatePostModalProps {
     isOpen: boolean;
