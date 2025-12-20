@@ -1,6 +1,6 @@
 // filepath: /home/awail/WebstormProjects/islam_front/src/apis/chatApi.ts
 
-const API_BASE_URL =  'http://44.192.94.63:3000';
+const API_BASE_URL =  'http://localhost:3000';
 
 /* =========================
    Types

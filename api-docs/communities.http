@@ -4,7 +4,7 @@
 ###############################################################################
 
 # Dynamic Variables - edit these or they will be set from responses
-@baseUrl = http://localhost:3000
+@baseUrl = 44.192.94.63:3000
 @userId = YOUR_USER_ID
 @communityId = YOUR_COMMUNITY_ID
 

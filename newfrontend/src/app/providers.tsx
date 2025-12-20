@@ -26,7 +26,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    // MSWProvider removed - using real backend at http://44.192.94.63:3000
+    // MSWProvider removed - using real backend at http://localhost:3000
     <QueryProvider>
       <ThemeProvider>
         <ErrorBoundary>

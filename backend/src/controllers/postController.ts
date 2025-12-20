@@ -87,7 +87,7 @@ export const createPost = async (req: Request, res: Response) => {
                 relativePath = url.pathname;
             }
             
-            const imagePath = path.join(PROJECT_ROOT, 'uploads', relativePath);
+            const imagePath = path.join(PROJECT_ROOT, '../uploads', relativePath);
             const dataUrl = getImageAsDataUrl(imagePath);
             if (dataUrl) {
                 populatedPost.imageUrl = dataUrl;

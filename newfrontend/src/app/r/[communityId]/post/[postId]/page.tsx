@@ -19,7 +19,7 @@ import { usePost, useAuthStore } from '@/hooks';
 const getFullImageUrl = (url?: string) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
-    return `${process.env.NEXT_PUBLIC_API_URL || 'http://44.192.94.63:3000'}${url}`;
+    return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}${url}`;
 };
 
 export default function PostPage() {
